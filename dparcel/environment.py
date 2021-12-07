@@ -109,7 +109,7 @@ class Environment:
 
     def liquid_ratio_from_pressure(self, pressure):
         """
-        Finds the environmental dew point at a given pressure.
+        Finds the environmental liquid ratio at a given pressure.
         """
 
         l = self._p_to_l_interp(pressure.m_as(units.mbar))
@@ -159,7 +159,7 @@ class Environment:
 
     def liquid_ratio(self, height):
         """
-        Finds the environmental dew point at a given height.
+        Finds the environmental liquid ratio at a given height.
         """
 
         l = self._z_to_l_interp(height.m_as(units.meter))
@@ -188,29 +188,6 @@ class Environment:
         pressure = self.pressure(height)
         dewpoint = self.dewpoint(height)
         return mpcalc.specific_humidity_from_dewpoint(pressure, dewpoint)
-
-    def maximum_specific_humidity_change(self, height):
-        """
-        Calculates the maximum specific humidity increase for the parcel.
-
-        Finds the root of dq_root at the specified height.
-        """
-
-        pressure = self.pressure(height)
-        initial_temperature = self.temperature(height)
-        initial_specific_humidity = self.specific_humidity(height)
-
-        def dq_root(dq):
-            """
-            Calculates the saturated vs. actual specific humidity difference.
-            """
-
-            final_temperature = initial_temperature + temperature_change(dq)
-            q_sat = saturation_specific_humidity(pressure, final_temperature)
-            return q_sat - initial_specific_humidity - dq
-
-        sol = root_scalar(dq_root, bracket=[0, 20e-3])
-        return sol.root*units.dimensionless
 
     def density(self, height):
         """
@@ -279,6 +256,7 @@ def idealised_sounding(relative_humidity, info='', name=''):
     def dzdp(pressure, height):
         """
         Calculates the rate of height change w.r.t. pressure, dz/dp.
+        
         Args:
             pressure: The pressure at the point of interest, in Pa.
             height: The height of the point of interest, in m.
