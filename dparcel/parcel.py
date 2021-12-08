@@ -231,9 +231,11 @@ class Parcel:
 
         # pre-compute temperature as a function of height to avoid
         # redundant calculations at every time step
-        sample_heights = np.arange(initial_height, 0, -step)
+        sample_heights = np.arange(
+            initial_height.m_as(units.meter), 0,
+            -step.m_as(units.meter))*units.meter
         sample_t, sample_q, sample_l = self.profile(
-            sample_heights*units.meter, t_initial, q_initial, l_initial,
+            sample_heights, t_initial, q_initial, l_initial,
             rate, step)
         
         def motion_ode(time, state):
@@ -245,7 +247,7 @@ class Parcel:
             # was pre-computed
             closest_index = (
                 sample_heights.size - 1
-                 - np.searchsorted(np.fliplr(sample_heights), height))
+                 - np.searchsorted(np.flip(sample_heights), height))
             
             # start from the pre-computed values and integrate the small
             # remaining distance to the desired level to find the buoyancy
