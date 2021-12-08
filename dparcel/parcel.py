@@ -21,7 +21,7 @@ class MotionResult:
     pass
 
 
-class EntrainingParcel:
+class Parcel:
     """
     Class for parcel theory calculations with entrainment.
     """
@@ -56,7 +56,6 @@ class EntrainingParcel:
             3-tuple of final temperature, specific humidity and liquid ratio.
         """
 
-        height = height
         t_parcel = state[0]
         q_parcel = state[1]
         l_parcel = state[2]
@@ -230,15 +229,31 @@ class EntrainingParcel:
             An instance of MotionResult.
         """
 
-        def motion_ode(time, state, *args):
+        # pre-compute temperature as a function of height to avoid
+        # redundant calculations at every time step
+        sample_heights = np.arange(initial_height, 0, -step)
+        sample_t, sample_q, sample_l = self.profile(
+            sample_heights*units.meter, t_initial, q_initial, l_initial,
+            rate, step)
+        
+        def motion_ode(time, state):
+            """Defines the parcel's equation of motion."""
+            
             height = np.max([state[0], 0])*units.meter
-            b = self.buoyancy(
-                height, *args, kind=kind, liquid_correction=liquid_correction)
-            return [state[1], b.m]
-
-        initial_height = initial_height.m_as(units.meter)
-        initial_velocity = initial_velocity.m_as(units.meter/units.second)
-        time = time.to(units.second).m
+            
+            # find the index of the closest height at which the temperature
+            # was pre-computed
+            closest_index = (
+                sample_heights.size - 1
+                 - np.searchsorted(np.fliplr(sample_heights), height))
+            
+            # start from the pre-computed values and integrate the small
+            # remaining distance to the desired level to find the buoyancy
+            buoyancy = self.buoyancy(
+                height, sample_heights[closest_index], sample_t[closest_index],
+                sample_q[closest_index], sample_l[closest_index], rate, step,
+                kind, liquid_correction)
+            return [state[1], buoyancy.m]
 
         # event function for solve_ivp, zero when parcel reaches min height
         min_height = lambda time, state, *args: state[1]
@@ -254,22 +269,20 @@ class EntrainingParcel:
         neutral_buoyancy = lambda time, state, *args: motion_ode(
             time, state, *args)[1]
 
-        # prepare empty arrays for data
-        height = np.zeros(len(time))
-        height[:] = np.nan
-        velocity = np.zeros(len(time))
-        velocity[:] = np.nan
-
+        # solve the equation of motion
+        initial_height = initial_height.m_as(units.meter)
+        initial_velocity = initial_velocity.m_as(units.meter/units.second)
+        time = time.to(units.second).m
         sol = solve_ivp(
             motion_ode,
             [np.min(time), np.max(time)],
             [initial_height, initial_velocity],
             t_eval=time,
-            args=(
-                initial_height*units.meter, t_initial,
-                q_initial, l_initial, rate, step),
             events=[neutral_buoyancy, hit_ground, min_height])
 
+        # record height and velocity
+        height = np.full(len(time), np.nan)
+        velocity = np.full(len(time), np.nan)
         height[:len(sol.y[0,:])] = sol.y[0,:]
         velocity[:len(sol.y[1,:])] = sol.y[1,:]
 
@@ -292,6 +305,7 @@ class EntrainingParcel:
         min_height_height = (
             sol.y_events[2][0,0] if sol.y_events[2].size > 0 else np.nan)
 
+        # collect everything in a MotionResult object
         result = MotionResult()
         result.height = height*units.meter
         result.velocity = velocity*units.meter/units.second
@@ -304,5 +318,4 @@ class EntrainingParcel:
         result.hit_ground_velocity = (
             hit_ground_velocity*units.meter/units.second)
         result.min_height = min_height_height*units.meter
-
         return result
