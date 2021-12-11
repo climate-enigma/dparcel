@@ -1,8 +1,6 @@
-# Class for parcel theory calculations on real atmospheric soundings
-# with entrainment.
-
-# Thomas Schanzer, UNSW Sydney
-# October 2021
+# Copyright (c) 2021 Thomas Schanzer.
+# Distributed under the terms of the BSD 3-Clause License.
+"""Class for parcel theory calculations on real atmospheric soundings."""
 
 import numpy as np
 
@@ -17,29 +15,22 @@ from scipy.integrate import solve_ivp
 from thermo import descend, equilibrate
 
 
-class MotionResult:
-    pass
-
-
 class Parcel:
-    """
-    Class for parcel theory calculations with entrainment.
-    """
+    """Class for parcel theory calculations with entrainment."""
 
     def __init__(self, environment):
         """
-        Instantiates an EntrainingParcel.
+        Instantiate an EntrainingParcel.
 
         Args:
             environment: An instance of Environment on which the
                 calculations are to be performed.
         """
-
         self._env = environment
 
-    def _entrain_discrete(self, height, state, rate, dz, kind='pseudo'):
+    def _entrain_discrete(self, height, state, rate, step, kind='pseudo'):
         """
-        Finds parcel properties after descent/entrainment.
+        Find parcel properties after descent/entrainment.
 
         Only valid for small steps.
 
@@ -48,25 +39,24 @@ class Parcel:
             state: 3-tuple of initial temperature, specific humidity
                 and liquid ratio.
             rate: Entrainment rate.
-            dz: Size of *downward* step, i.e. initial minus final height.
+            step: Size of *downward* step, i.e. initial minus final height.
             kind: 'pseudo' for pseudoadiabats, 'reversible' for reversible
                 adiabats.
 
         Returns:
             3-tuple of final temperature, specific humidity and liquid ratio.
         """
-
         t_parcel = state[0]
         q_parcel = state[1]
         l_parcel = state[2]
         p_initial = self._env.pressure(height)
-        p_final = self._env.pressure(height - dz)
+        p_final = self._env.pressure(height - step)
 
         # steps 1 and 2: mixing and phase equilibration
         t_eq, q_eq, l_eq = equilibrate(
             p_initial, t_parcel, q_parcel, l_parcel,
             self._env.temperature(height), self._env.specific_humidity(height),
-            self._env.liquid_ratio(height), rate, dz)
+            self._env.liquid_ratio(height), rate, step)
 
         # step 3: dry or moist adiabatic descent
         t_final, q_final, l_final = descend(
@@ -76,9 +66,9 @@ class Parcel:
 
     def profile(
             self, height, t_initial, q_initial, l_initial, rate,
-            dz=50*units.meter, reference_height=None, kind='pseudo'):
+            step=50*units.meter, reference_height=None, kind='pseudo'):
         """
-        Calculates parcel properties for descent with entrainment.
+        Calculate parcel properties for descent with entrainment.
 
         Valid for arbitrary steps.
 
@@ -88,7 +78,7 @@ class Parcel:
             q_initial: Initial parcel specific humidity.
             l_initial: Initial parcel liquid ratio.
             rate: Entrainment rate.
-            dz: Size of *downward* step for computing finite differences.
+            step: Size of *downward* step for computing finite differences.
             kind: 'pseudo' for pseudoadiabats, 'reversible' for reversible
                 adiabats.
 
@@ -96,9 +86,8 @@ class Parcel:
             3-tuple containing the temperature, specific humidity and
                 liquid ratio arrays for the given height array.
         """
-
         height = np.atleast_1d(height).m_as(units.meter)
-        dz = dz.m_as(units.meter)
+        step = step.m_as(units.meter)
         if reference_height is not None:
             reference_height = reference_height.m_as(units.meter)
             if height.size == 1 and height.item() >= reference_height:
@@ -107,10 +96,10 @@ class Parcel:
 
         # create height array with correct spacing
         if reference_height is None or reference_height == height[0]:
-            all_heights = np.arange(height[0], height[-1], -dz)
+            all_heights = np.arange(height[0], height[-1], -step)
             all_heights = np.append(all_heights, height[-1])*units.meter
         else:
-            all_heights = np.arange(reference_height, height[-1], -dz)
+            all_heights = np.arange(reference_height, height[-1], -step)
             all_heights = np.append(all_heights, height[-1])*units.meter
 
         # calculate t, q and l one downward step at a time
@@ -120,6 +109,9 @@ class Parcel:
                 all_heights[i], sol_states[i], rate,
                 all_heights[i] - all_heights[i+1], kind=kind)
             sol_states.append(next_state)
+
+        if height.size == 1:
+            return sol_states[-1]
 
         t_sol = concatenate(
             [state[0] for state in sol_states]).m_as(units.celsius)
@@ -134,19 +126,13 @@ class Parcel:
         l_interp = interp1d(all_heights.m, l_sol)
         l_out = l_interp(height)*units.dimensionless
 
-        # return scalars if only one height was given
-        if height.size == 1:
-            t_out = t_out.item()
-            q_out = q_out.item()
-            l_out = l_out.item()
-
         return t_out, q_out, l_out
-    
+
     def density(
             self, height, initial_height, t_initial, q_initial, l_initial,
             rate, step=50*units.meter, kind='pseudo', liquid_correction=True):
         """
-        Calculates parcel density as a function of height.
+        Calculate parcel density as a function of height.
 
         Args:
             height: Height of the parcel.
@@ -164,21 +150,20 @@ class Parcel:
         Returns:
             The density of the parcel at <height>.
         """
-
         t_final, q_final, l_final = self.profile(
-            height, t_initial, q_initial, l_initial, rate, dz=step,
+            height, t_initial, q_initial, l_initial, rate, step=step,
             reference_height=initial_height, kind=kind)
         r_final = mpcalc.mixing_ratio_from_specific_humidity(q_final)
         p_final = self._env.pressure(height)
 
         gas_density = mpcalc.density(p_final, t_final, r_final)
         return gas_density/(1 - l_final.m*liquid_correction)
-    
+
     def buoyancy(
             self, height, initial_height, t_initial, q_initial, l_initial,
             rate, step=50*units.meter, kind='pseudo', liquid_correction=True):
         """
-        Calculates parcel buoyancy as a function of height.
+        Calculate parcel buoyancy as a function of height.
 
         Args:
             height: Height of the parcel.
@@ -196,20 +181,19 @@ class Parcel:
         Returns:
             The buoyancy of the parcel at <height>.
         """
-
         env_density = self._env.density(height)
-        pcl_density = self.density(
+        parcel_density = self.density(
             height, initial_height, t_initial, q_initial, l_initial, rate,
             step, kind=kind, liquid_correction=liquid_correction)
 
-        return (env_density - pcl_density)/pcl_density*const.g
-    
+        return (env_density - parcel_density)/parcel_density*const.g
+
     def motion(
             self, time, initial_height, initial_velocity, t_initial,
             q_initial, l_initial, rate, step=50*units.meter,
             kind='pseudo', liquid_correction=True):
         """
-        Solves the equation of motion for the parcel.
+        Solve the equation of motion for the parcel.
 
         Args:
             time: Array of times for which the results will be reported.
@@ -228,27 +212,24 @@ class Parcel:
         Returns:
             An instance of MotionResult.
         """
-
         # pre-compute temperature as a function of height to avoid
         # redundant calculations at every time step
         sample_heights = np.arange(
             initial_height.m_as(units.meter), 0,
             -step.m_as(units.meter))*units.meter
         sample_t, sample_q, sample_l = self.profile(
-            sample_heights, t_initial, q_initial, l_initial,
-            rate, step)
-        
-        def motion_ode(time, state):
-            """Defines the parcel's equation of motion."""
-            
+            sample_heights, t_initial, q_initial, l_initial, rate, step)
+
+        def motion_ode(_, state):
+            """Define the parcel's equation of motion."""
             height = np.max([state[0], 0])*units.meter
-            
+
             # find the index of the closest height at which the temperature
             # was pre-computed
             closest_index = (
                 sample_heights.size - 1
-                 - np.searchsorted(np.flip(sample_heights), height))
-            
+                - np.searchsorted(np.flip(sample_heights), height))
+
             # start from the pre-computed values and integrate the small
             # remaining distance to the desired level to find the buoyancy
             buoyancy = self.buoyancy(
@@ -258,18 +239,20 @@ class Parcel:
             return [state[1], buoyancy.m]
 
         # event function for solve_ivp, zero when parcel reaches min height
-        min_height = lambda time, state, *args: state[1]
+        def min_height(_, state):
+            return state[1]
         min_height.direction = 1  # find zero that goes from - to +
         min_height.terminal = True  # stop integration at minimum height
 
         # event function for solve_ivp, zero when parcel hits ground
-        hit_ground = lambda time, state, *args: state[0]
+        def hit_ground(_, state):
+            return state[0]
         hit_ground.terminal = True  # stop integration at ground
 
         # event function for solve_ivp, zero when parcel is neutrally
         # buoyant
-        neutral_buoyancy = lambda time, state, *args: motion_ode(
-            time, state, *args)[1]
+        def neutral_buoyancy(time, state):
+            return motion_ode(time, state)[1]
 
         # solve the equation of motion
         initial_height = initial_height.m_as(units.meter)
@@ -285,8 +268,8 @@ class Parcel:
         # record height and velocity
         height = np.full(len(time), np.nan)
         velocity = np.full(len(time), np.nan)
-        height[:len(sol.y[0,:])] = sol.y[0,:]
-        velocity[:len(sol.y[1,:])] = sol.y[1,:]
+        height[:len(sol.y[0, :])] = sol.y[0, :]
+        velocity[:len(sol.y[1, :])] = sol.y[1, :]
 
         # record times of events
         # sol.t_events[i].size == 0 means the event did not occur
@@ -299,15 +282,18 @@ class Parcel:
 
         # record states at event times
         neutral_buoyancy_height = (  # record only the first instance
-            sol.y_events[0][0,0] if sol.y_events[0].size > 0 else np.nan)
+            sol.y_events[0][0, 0] if sol.y_events[0].size > 0 else np.nan)
         neutral_buoyancy_velocity = (  # record only the first instance
-            sol.y_events[0][0,1] if sol.y_events[0].size > 0 else np.nan)
+            sol.y_events[0][0, 1] if sol.y_events[0].size > 0 else np.nan)
         hit_ground_velocity = (
-            sol.y_events[1][0,1] if sol.y_events[1].size > 0 else np.nan)
+            sol.y_events[1][0, 1] if sol.y_events[1].size > 0 else np.nan)
         min_height_height = (
-            sol.y_events[2][0,0] if sol.y_events[2].size > 0 else np.nan)
+            sol.y_events[2][0, 0] if sol.y_events[2].size > 0 else np.nan)
 
         # collect everything in a MotionResult object
+        class MotionResult:
+            """Container for calculation results."""
+
         result = MotionResult()
         result.height = height*units.meter
         result.velocity = velocity*units.meter/units.second
