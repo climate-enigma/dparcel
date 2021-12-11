@@ -516,8 +516,8 @@ def wetbulb(pressure, theta_e, improve=True):
     C = 273.15
 
     # convert inputs to the correct form for the method
-    pressure = pressure.m_as(units.mbar)
-    theta_e = theta_e.m_as(units.kelvin)
+    pressure = np.atleast_1d(pressure.m_as(units.mbar))
+    theta_e = np.atleast_1d(theta_e.m_as(units.kelvin))
     pi = (pressure/1000.0)**(1./lambda_)
     Teq = theta_e*pi
 
@@ -562,7 +562,7 @@ def wetbulb(pressure, theta_e, improve=True):
         fvalue = _daviesjones_f(Tw + C, pi)
         Tw = Tw - (fvalue - X)/slope
 
-    return Tw*units.celsius
+    return (Tw if pressure.size > 1 else Tw.item())*units.celsius
 
 
 def reversible_lapse_daviesjones(
