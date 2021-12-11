@@ -43,17 +43,17 @@ class Environment:
             name: Short name for the sounding, e.g. 'Sydney' (optional).
         """
         # record input data as attributes for use by methods
-        pressure = pressure.m_as(units.mbar)
-        height = height.m_as(units.meter)
-        height -= np.min(height)  # set z = 0 at surface
-        temperature = temperature.m_as(units.celsius)
-        dewpoint = dewpoint.m_as(units.celsius)
+        self._pressure_raw = pressure.m_as(units.mbar)
+        self._height_raw = height.m_as(units.meter)
+        self._height_raw -= np.min(self._height_raw)  # set z = 0 at surface
+        self._temperature_raw = temperature.m_as(units.celsius)
+        self._dewpoint_raw = dewpoint.m_as(units.celsius)
 
         # if no liquid ratio profile is given, assume it is zero
         if liquid_ratio is None:
-            liquid_ratio = np.zeros(pressure.size)
+            self._liquid_ratio_raw = np.zeros(pressure.size)
         elif hasattr(liquid_ratio, 'units'):
-            liquid_ratio = liquid_ratio.m_as(units.dimensionless)
+            self._liquid_ratio_raw = liquid_ratio.m_as(units.dimensionless)
 
         self.info = info
         self.name = name
@@ -62,24 +62,26 @@ class Environment:
         # at any height
 
         self._pressure_to_temperature_interp = interp1d(
-            pressure, temperature, fill_value='extrapolate')
+            self._pressure_raw, self._temperature_raw,
+            fill_value='extrapolate')
         self._height_to_temperature_interp = interp1d(
-            height, temperature, fill_value='extrapolate')
+            self._height_raw, self._temperature_raw, fill_value='extrapolate')
 
         self._pressure_to_dewpoint_interp = interp1d(
-            pressure, dewpoint, fill_value='extrapolate')
+            self._pressure_raw, self._dewpoint_raw, fill_value='extrapolate')
         self._height_to_dewpoint_interp = interp1d(
-            height, dewpoint, fill_value='extrapolate')
+            self._height_raw, self._dewpoint_raw, fill_value='extrapolate')
 
         self._pressure_to_liquid_ratio_interp = interp1d(
-            pressure, liquid_ratio, fill_value='extrapolate')
+            self._pressure_raw, self._liquid_ratio_raw,
+            fill_value='extrapolate')
         self._height_to_liquid_ratio_interp = interp1d(
-            height, liquid_ratio, fill_value='extrapolate')
+            self._height_raw, self._liquid_ratio_raw, fill_value='extrapolate')
 
         self._pressure_to_height_interp = interp1d(
-            pressure, height, fill_value='extrapolate')
+            self._pressure_raw, self._height_raw, fill_value='extrapolate')
         self._height_to_pressure_interp = interp1d(
-            height, pressure, fill_value='extrapolate')
+            self._height_raw, self._pressure_raw, fill_value='extrapolate')
 
     def temperature_from_pressure(self, pressure):
         """Find the environmental temperature at a given pressure."""
