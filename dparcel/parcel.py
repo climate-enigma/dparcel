@@ -12,7 +12,7 @@ import metpy.constants as const
 from scipy.interpolate import interp1d
 from scipy.integrate import solve_ivp
 
-from thermo import descend, equilibrate
+from .thermo import descend, equilibrate
 
 
 class Parcel:
@@ -194,6 +194,9 @@ class Parcel:
             kind='pseudo', liquid_correction=True):
         """
         Solve the equation of motion for the parcel.
+        
+        Integration stops if the parcel reaches a minimum height or
+        the surface.
 
         Args:
             time: Array of times for which the results will be reported.
@@ -210,7 +213,31 @@ class Parcel:
                 of liquid water.
 
         Returns:
-            An instance of MotionResult.
+            Bunch object with the folliwing fields defined --
+                - **height** -- Array of parcel heights at each time.
+                - **velocity** -- Array of parcel velocitites at each time.
+                - **neutral_buoyancy_time** -- The time at which the parcel
+                  reached its neutral buoyancy level (np.nan if this did
+                  not occur because the parcel reached the ground before
+                  becoming neutrally buoyant).
+                - **hit_ground_time** -- The time at which the parcel reached
+                  the surface (np.nan if this did not occur because the
+                  parcel stopped at some minimum height above the surface).
+                - **min_height_time** -- The time at which the parcel reached
+                  its minimum height (np.nan if this did not occur because
+                  it reached the surface).
+                - **neutral_buoyancy_height** -- The height of the neutral
+                  buoyancy level (np.nan if it does not exist because the
+                  parcel reached the ground before becoming neutrally
+                  buoyant).
+                - **neutral_buoyancy_velocity** -- The parcel's velocity at its
+                  neutral buoyancy level (np.nan if this does not exist
+                  because the parcel reached the ground before becoming
+                  neutrally buoyant).
+                - **hit_ground_velocity** -- The parcel's velocity at the
+                  surface (np.nan if the parcel did not reach the surface).
+                - **min_height** -- The minimum height reached by the parcel
+                  (np.nan if it reached the surface).
         """
         # pre-compute temperature as a function of height to avoid
         # redundant calculations at every time step

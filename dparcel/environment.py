@@ -18,7 +18,7 @@ import metpy.constants as const
 from scipy.interpolate import interp1d
 from scipy.integrate import solve_ivp
 
-from thermo import equivalent_potential_temperature, wetbulb
+from .thermo import equivalent_potential_temperature, wetbulb
 
 
 class Environment:
