@@ -18,12 +18,16 @@ Use the package manager `pip <https://pip.pypa.io/en/stable/>`_ to install :code
 
 Dependencies
 --------------
+The following packages must be installed:
+
 * :code:`numpy`
 * :code:`scipy`
 * :code:`metpy`
 
 Documentation
 ---------------
+Documentation is available at https://dparcel.readthedocs.io/.
+
 A report that discusses the background and theory of the model, existing literature, the methods used (with flowcharts for the main functions in the package) and
 some basic results that were obtained from the model is available `here <https://github.com/tschanzer/dparcel/blob/main/docs/report.pdf>`_.
 
