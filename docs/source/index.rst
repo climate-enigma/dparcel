@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Documentation for dparcel
-*************************
+**dparcel**
+*************
 
 :code:`dparcel` is a very simple model of downdrafts in atmospheric convection that uses parcel theory to simulate the motion of a descending, entraining air parcel.
 You may supply any atmospheric sounding and initial conditions for the calculation.
@@ -23,6 +23,8 @@ Use the package manager `pip <https://pip.pypa.io/en/stable/>`_ to install :code
 
 Dependencies
 --------------
+The following packages must be installed:
+
 * :code:`numpy`
 * :code:`scipy`
 * :code:`metpy`
@@ -38,8 +40,8 @@ Documentation Contents
 .. toctree::
    :maxdepth: 3
 
-   modules
-   examples
+   api/api
+   examples/examples
 
 * :ref:`genindex`
 * :ref:`modindex`

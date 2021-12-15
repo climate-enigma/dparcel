@@ -44,8 +44,8 @@ def moist_lapse(
 
     References:
         DAVIES-JONES, R 2008, ‘An Efficient and Accurate Method for
-            Computing the Wet-Bulb Temperature along Pseudoadiabats’,
-            Monthly weather review, vol. 136, no. 7, pp. 2764–2785.
+        Computing the Wet-Bulb Temperature along Pseudoadiabats’,
+        Monthly weather review, vol. 136, no. 7, pp. 2764–2785.
     """
     pressure = np.atleast_1d(pressure)
     if reference_pressure is None:
@@ -130,8 +130,8 @@ def equivalent_potential_temperature(p, Tk, q, prime=False):
 
     References:
         Bolton, D 1980, ‘The Computation of Equivalent Potential
-            Temperature’, Monthly weather review, vol. 108, no. 7,
-            pp. 1046–1053.
+        Temperature’, Monthly weather review, vol. 108, no. 7,
+        pp. 1046–1053.
     """
     # ensure correct units
     Tk = Tk.to(units.kelvin)
@@ -194,9 +194,9 @@ def dcape_dcin(sounding, samples=10000):
 
     References:
         Market, PS, Rochette, SM, Shewchuk, J, Difani, R, Kastman, JS,
-            Henson, CB & Fox, NI 2017, ‘Evaluating elevated convection
-            with the downdraft convective inhibition’, Atmospheric
-            science letters, vol. 18, no. 2, pp. 76–81.
+        Henson, CB & Fox, NI 2017, ‘Evaluating elevated convection
+        with the downdraft convective inhibition’, Atmospheric
+        science letters, vol. 18, no. 2, pp. 76–81.
     """
     # find minimum wet bulb temperature in lowest 6 km
     def env_wetbulb(z):
@@ -254,8 +254,8 @@ def lcl_romps(p, T, q):
 
     References:
         Romps, DM 2017, ‘Exact Expression for the Lifting Condensation
-            Level’, Journal of the atmospheric sciences, vol. 74,
-            no. 12, pp. 3891–3900.
+        Level’, Journal of the atmospheric sciences, vol. 74,
+        no. 12, pp. 3891–3900.
     """
     # unit conversions
     rhl = mpcalc.relative_humidity_from_specific_humidity(p, T, q).m
@@ -306,8 +306,8 @@ def wetbulb_romps(pressure, temperature, specific_humidity):
 
     References:
         Romps, DM 2017, ‘Exact Expression for the Lifting Condensation
-            Level’, Journal of the atmospheric sciences, vol. 74,
-            no. 12, pp. 3891–3900.
+        Level’, Journal of the atmospheric sciences, vol. 74,
+        no. 12, pp. 3891–3900.
     """
     lcl_pressure, lcl_temperature = lcl_romps(
         pressure, temperature, specific_humidity)
@@ -331,8 +331,8 @@ def wetbulb_potential_temperature(theta_e):
 
     References:
         DAVIES-JONES, R 2008, ‘An Efficient and Accurate Method for
-            Computing the Wet-Bulb Temperature along Pseudoadiabats’,
-            Monthly weather review, vol. 136, no. 7, pp. 2764–2785.
+        Computing the Wet-Bulb Temperature along Pseudoadiabats’,
+        Monthly weather review, vol. 136, no. 7, pp. 2764–2785.
     """
     theta_e = theta_e.m_as(units.kelvin)
 
@@ -379,8 +379,8 @@ def _daviesjones_f(Tw, pi, Q=None, kind='pseudo'):
 
     References:
         DAVIES-JONES, R 2008, ‘An Efficient and Accurate Method for
-            Computing the Wet-Bulb Temperature along Pseudoadiabats’,
-            Monthly weather review, vol. 136, no. 7, pp. 2764–2785.
+        Computing the Wet-Bulb Temperature along Pseudoadiabats’,
+        Monthly weather review, vol. 136, no. 7, pp. 2764–2785.
     """
     cp = const.dry_air_spec_heat_press.m
     R = const.dry_air_gas_constant.m
@@ -440,8 +440,8 @@ def _daviesjones_fprime(tau, pi, Q=None, kind='pseudo'):
 
     References:
         DAVIES-JONES, R 2008, ‘An Efficient and Accurate Method for
-            Computing the Wet-Bulb Temperature along Pseudoadiabats’,
-            Monthly weather review, vol. 136, no. 7, pp. 2764–2785.
+        Computing the Wet-Bulb Temperature along Pseudoadiabats’,
+        Monthly weather review, vol. 136, no. 7, pp. 2764–2785.
     """
     cp = const.dry_air_spec_heat_press.m
     R = const.dry_air_gas_constant.m
@@ -506,8 +506,8 @@ def wetbulb(pressure, theta_e, improve=True):
 
     References:
         DAVIES-JONES, R 2008, ‘An Efficient and Accurate Method for
-            Computing the Wet-Bulb Temperature along Pseudoadiabats’,
-            Monthly weather review, vol. 136, no. 7, pp. 2764–2785.
+        Computing the Wet-Bulb Temperature along Pseudoadiabats’,
+        Monthly weather review, vol. 136, no. 7, pp. 2764–2785.
     """
     # constants
     cp = const.dry_air_spec_heat_press.m
@@ -592,8 +592,8 @@ def reversible_lapse_daviesjones(
 
     References:
         DAVIES-JONES, R 2008, ‘An Efficient and Accurate Method for
-            Computing the Wet-Bulb Temperature along Pseudoadiabats’,
-            Monthly weather review, vol. 136, no. 7, pp. 2764–2785.
+        Computing the Wet-Bulb Temperature along Pseudoadiabats’,
+        Monthly weather review, vol. 136, no. 7, pp. 2764–2785.
     """
     pressure = np.atleast_1d(pressure).m_as(units.mbar)
     if reference_pressure is None:
@@ -667,9 +667,9 @@ def reversible_lapse_saunders(
 
     References:
         Saunders, PM 1957, ‘The thermodynamics of saturated air: A
-            contribution to the classical theory’, Quarterly journal of
-            the Royal Meteorological Society, vol. 83, no. 357,
-            pp. 342–350.
+        contribution to the classical theory’, Quarterly journal of
+        the Royal Meteorological Society, vol. 83, no. 357,
+        pp. 342–350.
     """
     pressure = np.atleast_1d(pressure).m_as(units.mbar)
     if reference_pressure is None:

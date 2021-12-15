@@ -1,5 +1,6 @@
 ipykernel
 nbsphinx
+nbsphinx_link
 numpy
 scipy
 metpy

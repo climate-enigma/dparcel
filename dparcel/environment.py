@@ -154,11 +154,12 @@ class Environment:
 
         References:
             DAVIES-JONES, R 2008, ‘An Efficient and Accurate Method for
-                Computing the Wet-Bulb Temperature along Pseudoadiabats’,
-                Monthly weather review, vol. 136, no. 7, pp. 2764–2785.
+            Computing the Wet-Bulb Temperature along Pseudoadiabats’,
+            Monthly weather review, vol. 136, no. 7, pp. 2764–2785.
+
             Bolton, D 1980, ‘The Computation of Equivalent Potential
-                Temperature’, Monthly weather review, vol. 108, no. 7,
-                pp. 1046–1053.
+            Temperature’, Monthly weather review, vol. 108, no. 7,
+            pp. 1046–1053.
         """
         pressure = self.pressure(height)
         temperature = self.temperature(height)
