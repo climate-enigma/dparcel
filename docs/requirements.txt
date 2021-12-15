@@ -1,4 +1,3 @@
 ipykernel
 nbsphinx
-sphinx
-sphinx.ext.napoleon
+sphinx==4.2.0
