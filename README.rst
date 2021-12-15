@@ -28,6 +28,11 @@ Documentation
 ---------------
 Documentation is available at https://dparcel.readthedocs.io/.
 
+.. image:: https://readthedocs.org/projects/dparcel/badge/?version=latest
+    :target: https://dparcel.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
+    
+
 License
 ---------
 `BSD-3-Clause License <https://choosealicense.com/licenses/bsd-3-clause/>`_
