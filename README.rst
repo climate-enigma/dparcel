@@ -2,7 +2,7 @@ dparcel
 *********
 
 :code:`dparcel` is a very simple model of downdrafts in atmospheric convection that uses parcel theory to simulate the motion of a descending, entraining air parcel.
-You supply any atmospheric sounding and initial conditions for the calculation.
+You may supply any atmospheric sounding and initial conditions for the calculation.
 
 It was developed by Thomas Schanzer, an undergraduate student at the University of New South Wales, as part of a research project under the supervision
 of Prof. Steven Sherwood of the UNSW Climate Change Research Centre.
