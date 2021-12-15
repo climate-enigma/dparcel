@@ -1,3 +1,4 @@
 ipykernel
 nbsphinx
+sphinx
 sphinx.ext.napoleon
