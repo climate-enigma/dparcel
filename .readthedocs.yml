@@ -1,10 +1,6 @@
-version: 2
-
 python:
   version: 3
   install:
     - requirements: docs/requirements.txt
   system_packages: true
-
-sphinx:
-  configuration: docs/conf.py
+  

@@ -30,7 +30,7 @@ release = '0.1'
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.napoleon', 'nbsphinx', 'sphinx.ext.autodoc']
+extensions = ['sphinx.ext.napoleon', 'nbsphinx']
 napoleon_include_init_with_doc = True
 
 # Add any paths that contain templates here, relative to this directory.
