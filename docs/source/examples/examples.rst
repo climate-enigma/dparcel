@@ -7,3 +7,4 @@ The following Jupyter notebooks demonstrate the use of :code:`dparcel`.
    :maxdepth: 3
 
    parcel_motion
+   real_sounding

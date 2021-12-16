@@ -225,7 +225,9 @@ def dcape_dcin(sounding, samples=10000):
         return 1 - tv_final.m_as(units.kelvin)/tv_env.m_as(units.kelvin)
 
     # DCAPE: integrate from surface to level of minimum wet bulb
-    # temperature, taking positive area only
+    # temperature, taking positive area only.
+    # passing the integrand function to scipy.integrate.quad is very
+    # slow so we compute many samples and use Simpson's method.
     z_sample = np.linspace(0, z_initial, samples)
     dcape = simps(
         np.maximum(integrand(z_sample), 0), z_sample)*units.meter*const.g
