@@ -317,9 +317,21 @@ class Parcel:
         min_height_height = (
             sol.y_events[2][0, 0] if sol.y_events[2].size > 0 else np.nan)
 
-        # collect everything in a MotionResult object
+        # collect everything in a bunch object
         class MotionResult:
             """Container for calculation results."""
+
+            def __init__(self):
+                """Instantiates a MotionResult."""
+                self.height = None
+                self.velocity = None
+                self.neutral_buoyancy_time = None
+                self.hit_ground_time = None
+                self.min_height_time = None
+                self.neutral_buoyancy_height = None
+                self.neutral_buoyancy_velocity = None
+                self.hit_ground_velocity = None
+                self.min_height = None
 
         result = MotionResult()
         result.height = height*units.meter
