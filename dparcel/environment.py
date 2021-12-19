@@ -162,13 +162,8 @@ class Environment:
             pp. 1046–1053.
         """
         pressure = self.pressure(height)
-        temperature = self.temperature(height)
-        dewpoint = self.dewpoint(height)
-        specific_humidity = mpcalc.specific_humidity_from_dewpoint(
-            pressure, dewpoint)
-        ept = equivalent_potential_temperature(
-            pressure, temperature, specific_humidity)
-        return wetbulb(pressure, ept, improve=True)
+        theta_e = self.equivalent_potential_temperature(height)
+        return wetbulb(pressure, theta_e, improve=True)
 
     def specific_humidity(self, height):
         """Find the environmental specific humidity at a given height."""
@@ -183,6 +178,58 @@ class Environment:
         mixing_ratio = mpcalc.mixing_ratio_from_specific_humidity(
             self.specific_humidity(height))
         return mpcalc.density(pressure, temperature, mixing_ratio)
+    
+    def equivalent_potential_temperature(self, height):
+        """
+        Find the environmental equivalent potential temperature.
+        
+        Uses the approximation of eq. (39) in Bolton (1980).
+
+        References:
+            Bolton, D 1980, ‘The Computation of Equivalent Potential
+            Temperature’, Monthly weather review, vol. 108, no. 7,
+            pp. 1046–1053.
+        """
+        pressure = self.pressure(height)
+        temperature = self.temperature(height)
+        specific_humidity = self.specific_humidity(height)
+        return equivalent_potential_temperature(
+            pressure, temperature, specific_humidity)
+    
+    def potential_temperature(self, height):
+        """Find the environmental potential temperature at a given height."""
+        pressure = self.pressure(height)
+        temperature = self.temperature(height)
+        return mpcalc.potential_temperature(pressure, temperature)
+    
+    def virtual_temperature(self, height):
+        """Find the environmental virtual temperature at a given height."""
+        temperature = self.temperature(height)
+        mixing_ratio = mpcalc.mixing_ratio_from_specific_humidity(
+            self.specific_humidity(height))
+        return mpcalc.virtual_temperature(temperature, mixing_ratio)
+    
+    def dry_static_energy(self, height):
+        """Find the environmental dry static energy at a given height."""
+        return mpcalc.dry_static_energy(height, self.temperature(height))
+    
+    def moist_static_energy(self, height):
+        """Find the environmental moist static energy at a given height."""
+        temperature = self.temperature(height)
+        specific_humidity = self.specific_humidity(height)
+        return mpcalc.moist_static_energy(
+            height, temperature, specific_humidity)
+    
+    def mixing_ratio(self, height):
+        """Find the environmental mixing ratio at a given height."""
+        return mpcalc.mixing_ratio_from_specific_humidity(
+            self.specific_humidity(height))
+    
+    def relative_humidity(self, height):
+        """Find the environmental relative humidity at a given height."""
+        temperature = self.temperature(height)
+        dewpoint = self.dewpoint(height)
+        return mpcalc.relative_humidity_from_dewpoint(temperature, dewpoint)
 
 
 def idealised_sounding(relative_humidity, info='', name=''):
