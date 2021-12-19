@@ -178,11 +178,11 @@ class Environment:
         mixing_ratio = mpcalc.mixing_ratio_from_specific_humidity(
             self.specific_humidity(height))
         return mpcalc.density(pressure, temperature, mixing_ratio)
-    
+
     def equivalent_potential_temperature(self, height):
         """
         Find the environmental equivalent potential temperature.
-        
+
         Uses the approximation of eq. (39) in Bolton (1980).
 
         References:
@@ -195,36 +195,36 @@ class Environment:
         specific_humidity = self.specific_humidity(height)
         return equivalent_potential_temperature(
             pressure, temperature, specific_humidity)
-    
+
     def potential_temperature(self, height):
         """Find the environmental potential temperature at a given height."""
         pressure = self.pressure(height)
         temperature = self.temperature(height)
         return mpcalc.potential_temperature(pressure, temperature)
-    
+
     def virtual_temperature(self, height):
         """Find the environmental virtual temperature at a given height."""
         temperature = self.temperature(height)
         mixing_ratio = mpcalc.mixing_ratio_from_specific_humidity(
             self.specific_humidity(height))
         return mpcalc.virtual_temperature(temperature, mixing_ratio)
-    
+
     def dry_static_energy(self, height):
         """Find the environmental dry static energy at a given height."""
         return mpcalc.dry_static_energy(height, self.temperature(height))
-    
+
     def moist_static_energy(self, height):
         """Find the environmental moist static energy at a given height."""
         temperature = self.temperature(height)
         specific_humidity = self.specific_humidity(height)
         return mpcalc.moist_static_energy(
             height, temperature, specific_humidity)
-    
+
     def mixing_ratio(self, height):
         """Find the environmental mixing ratio at a given height."""
         return mpcalc.mixing_ratio_from_specific_humidity(
             self.specific_humidity(height))
-    
+
     def relative_humidity(self, height):
         """Find the environmental relative humidity at a given height."""
         temperature = self.temperature(height)
@@ -241,6 +241,10 @@ def idealised_sounding(relative_humidity, info='', name=''):
     and a moist adiabatic temperature profile above the boundary layer.
     The specific humidity is constant in the boundary layer, and the
     relative humidity is constant above the boundary layer.
+
+    The sounding is assumed to be hydrostatic; the sounding is first
+    defined in terms of pressure, then a nested function dzdp is
+    defined and we numerically solve dzdp(p, z) = -1/(rho*g).
 
     Args:
         relative_humidity: Relative humidity above the boundary layer.
@@ -299,6 +303,7 @@ def idealised_sounding(relative_humidity, info='', name=''):
 
         Args:
             pressure: The pressure at the point of interest, in Pa.
+
         Returns:
             The derivative dz/dp in m/Pa.
         """
@@ -311,9 +316,7 @@ def idealised_sounding(relative_humidity, info='', name=''):
         mixing_ratio = mpcalc.mixing_ratio_from_specific_humidity(
             specific_humidity)
         density = mpcalc.density(pressure, temperature, mixing_ratio)
-        dzdp = - 1 / (density.to(units.kg/units.meter**3).m * const.g)
-
-        return dzdp
+        return (-1/(density*const.g)).m_as(units.meter/units.pascal)
 
     height = solve_ivp(
         dzdp, (1013.25e2, np.min(pressure.m_as(units.pascal))),

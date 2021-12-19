@@ -194,7 +194,7 @@ class Parcel:
             kind='pseudo', liquid_correction=True):
         """
         Solve the equation of motion for the parcel.
-        
+
         Integration stops if the parcel reaches a minimum height or
         the surface.
 
