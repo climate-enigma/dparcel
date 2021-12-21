@@ -245,7 +245,8 @@ class Parcel:
             initial_height.m_as(units.meter), 0,
             -step.m_as(units.meter))*units.meter
         sample_t, sample_q, sample_l = self.profile(
-            sample_heights, t_initial, q_initial, l_initial, rate, step)
+            sample_heights, t_initial, q_initial, l_initial, rate, step,
+            kind=kind)
 
         def motion_ode(_, state):
             """Define the parcel's equation of motion."""
@@ -317,6 +318,32 @@ class Parcel:
         min_height_height = (
             sol.y_events[2][0, 0] if sol.y_events[2].size > 0 else np.nan)
 
+        # compute parcel propterties for the solution
+        temperature = np.full(len(time), np.nan)
+        specific_humidity = np.full(len(time), np.nan)
+        liquid_ratio = np.full(len(time), np.nan)
+        density = np.full(len(time), np.nan)
+        buoyancy = np.full(len(time), np.nan)
+
+        t_profile, q_profile, l_profile = self.profile(
+            sol.y[0, :]*units.meter, t_initial, q_initial, l_initial,
+            rate, step, kind=kind)
+        temperature[:len(sol.y[0, :])] = t_profile.m_as(units.celsius)
+        specific_humidity[:len(sol.y[0, :])] = q_profile.m
+        liquid_ratio[:len(sol.y[0, :])] = l_profile.m
+
+        r_profile = mpcalc.mixing_ratio_from_specific_humidity(q_profile)
+        p_profile = self._env.pressure(sol.y[0, :]*units.meter)
+        gas_density = mpcalc.density(p_profile, t_profile, r_profile)
+        density_profile = gas_density/(1 - l_profile.m*liquid_correction)
+        density[:len(sol.y[0, :])] = (
+            density_profile).m_as(units.kilogram/units.meter**3)
+
+        env_density = self._env.density(sol.y[0, :]*units.meter)
+        buoyancy[:len(sol.y[0, :])] = (
+            (env_density - density_profile)/density_profile*const.g
+        ).m_as(units.meter/units.second**2)
+
         # collect everything in a bunch object
         class MotionResult:
             """Container for calculation results."""
@@ -325,6 +352,11 @@ class Parcel:
                 """Instantiates a MotionResult."""
                 self.height = None
                 self.velocity = None
+                self.temperature = None
+                self.specific_humidity = None
+                self.liquid_ratio = None
+                self.density = None
+                self.buoyancy = None
                 self.neutral_buoyancy_time = None
                 self.hit_ground_time = None
                 self.min_height_time = None
@@ -336,6 +368,11 @@ class Parcel:
         result = MotionResult()
         result.height = height*units.meter
         result.velocity = velocity*units.meter/units.second
+        result.temperature = temperature*units.celsius
+        result.specific_humidity = specific_humidity*units.dimensionless
+        result.liquid_ratio = liquid_ratio*units.dimensionless
+        result.density = density*units.kilogram/units.meter**3
+        result.buoyancy = buoyancy*units.meter/units.second**2
         result.neutral_buoyancy_time = neutral_buoyancy_time*units.second
         result.hit_ground_time = hit_ground_time*units.second
         result.min_height_time = min_height_time*units.second
