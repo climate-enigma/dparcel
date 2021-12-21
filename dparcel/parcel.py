@@ -214,8 +214,16 @@ class Parcel:
 
         Returns:
             Bunch object with the folliwing fields defined --
-                - **height** -- Array of parcel heights at each time.
-                - **velocity** -- Array of parcel velocitites at each time.
+                - **height** -- Array of parcel height at each time step.
+                - **velocity** -- Array of parcel velocity at each time step.
+                - **temperature** -- Array of parcel temperature at each time
+                  step.
+                - **specific_humidity** -- Array of parcel specific humidity
+                  at each time step.
+                - **liquid_ratio** -- Array of parcel liquid water mass ratio
+                  at each time step.
+                - **density** -- Array of parcel density at each time step.
+                - **buoyancy** -- Array of parcel buoyancy at each time step.
                 - **neutral_buoyancy_time** -- The time at which the parcel
                   reached its neutral buoyancy level (np.nan if this did
                   not occur because the parcel reached the ground before
