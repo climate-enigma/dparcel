@@ -78,10 +78,7 @@ def moist_lapse(
             reference_pressure, initial_temperature, q_initial)
         # final temperature is equal to final wet bulb temperature
         # because parcel is saturated
-        temperature = wetbulb(pressure, theta_e, improve)
-        if temperature.size == 1:
-            return temperature.item()
-        return temperature
+        return wetbulb(pressure, theta_e, improve)
     else:
         raise ValueError("method must be 'fast' or 'integration'.")
 
