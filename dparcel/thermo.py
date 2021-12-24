@@ -178,6 +178,68 @@ def equivalent_potential_temperature(p, Tk, q, prime=False):
     return thetae, thetae*dlogthetae_dTk
 
 
+def saturation_equivalent_potential_temperature(p, Tk, prime=False):
+    """
+    Calculate saturation equivalent potential temperature.
+
+    Uses the approximation of theta-e given in eq. 39 of Bolton (1980).
+    Variable names follow the notation of Bolton.
+
+    Args:
+        p: Pressure.
+        Tk: Temperature.
+        prime: Whether or not to also return the derivative of
+            theta-e with respect to temperature at the given temperature
+            and pressure (optional, defaults to False).
+
+    Returns:
+        The saturation equivalent potential temperature (and its
+        derivative w.r.t. temperature if prime=True).
+
+    References:
+        Bolton, D 1980, ‘The Computation of Equivalent Potential
+        Temperature’, Monthly weather review, vol. 108, no. 7,
+        pp. 1046–1053.
+    """
+    # ensure correct units
+    Tk = Tk.to(units.kelvin)
+
+    # constants
+    a = 17.67*units.dimensionless
+    b = 243.5*units.kelvin
+    C = 273.15*units.kelvin
+    e0 = 6.112*units.mbar  # saturation vapour pressure at 0C (mbar)
+    epsilon = const.epsilon
+    kappa = const.kappa
+
+    # other variables
+    es = e0*np.exp(a*(Tk - C)/(Tk - C + b))  # sat. vapour pressure
+    rs = epsilon*es/(p - es)  # sat. mixing ratio
+
+    # potential temperature of dry air
+    thetadl = Tk*(1000*units.mbar/(p - es))**kappa
+    # equivalent potential temperature
+    thetae = thetadl*np.exp((3036*units.kelvin/Tk - 1.78)*rs*(1 + 0.448*rs))
+
+    if prime is False:
+        return thetae
+
+    # derivative of sat. vapour pressure w.r.t. temperature
+    des_dTk = a*b*es/(Tk - C + b)**2
+    # derivative of sat. mixing ratio w.r.t. temperature
+    drs_dTk = epsilon*p*des_dTk/(p - es)**2
+    # derivative of log(potential temperature of dry air)
+    dlogthetadl_dTk = 1/Tk + kappa*des_dTk/(p - es)
+    # derivative of log(theta-e) w.r.t. temperature
+    dlogthetae_dTk = (
+        dlogthetadl_dTk
+        - 3036*units.kelvin*rs*(1 + 0.448*rs)/Tk**2
+        + (3036*units.kelvin/Tk - 1.78)*drs_dTk*(1 + 2*0.448*rs)
+    )
+
+    return thetae, thetae*dlogthetae_dTk
+
+
 def dcape_dcin(sounding, samples=10000):
     """
     Compute DCAPE and DCIN for a sounding according to Market et. al. (2017).
