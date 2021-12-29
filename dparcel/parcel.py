@@ -595,7 +595,7 @@ class FastParcel:
         theta_e_sol = theta_e(height)
         q_sol = total_water(height)
 
-        # obtain a first guess for temperature using Davies-Jones (2008)
+        # use a dry adiabatic first guess for temperature
         pressure = self._env.pressure(height)
         initial_pressure = self._env.pressure(initial_height)
         temperature = mpcalc.dry_lapse(
