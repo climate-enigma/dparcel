@@ -12,8 +12,7 @@ import numpy as np
 
 import metpy.calc as mpcalc
 import metpy.constants as const
-from metpy.units import units
-from metpy.units import concatenate
+from metpy.units import units, concatenate
 
 from scipy.special import lambertw
 from scipy.optimize import minimize_scalar
@@ -892,33 +891,22 @@ def mix(parcel, environment, rate, dz):
     return parcel + rate * (environment - parcel) * dz
 
 
-def equilibrate(
-        pressure, t_parcel, q_parcel, l_parcel, t_env, q_env, l_env, rate, dz):
+def equilibrate(pressure, t_mixed, q_mixed, l_mixed):
     """
-    Find parcel properties after entrainment and phase equilibration.
+    Find parcel properties after phase equilibration.
 
     Args:
         pressure: Pressure during the change (constant).
-        t_parcel: Initial temperature of the parcel.
-        q_parcel: Initial specific humidity of the parcel.
-        l_parcel: Initial ratio of liquid mass to parcel mass.
-        t_env: Temperature of the environment.
-        q_env: Specific humidity of the environment.
-        l_env: Liquid ratio of the environment.
-        rate: Entrainment rate.
-        dz: Distance descended.
+        t_mixed: Initial temperature of the parcel.
+        q_mixed: Initial specific humidity of the parcel.
+        l_mixed: Initial ratio of liquid mass to parcel mass.
 
     Returns:
         A tuple containing the final parcel temperature, specific
             humidity and liquid ratio.
     """
-    # first mix parcel and environment without phase change
-    t_mixed = mix(t_parcel, t_env, rate, dz)
-    q_mixed = mix(q_parcel, q_env, rate, dz)
-    l_mixed = mix(l_parcel, l_env, rate, dz)
     q_mixed_saturated = saturation_specific_humidity(pressure, t_mixed)
 
-    # now ensure that the parcel is in phase equilibrium
     if q_mixed > q_mixed_saturated:
         # we need to condense water vapour
         t_final = wetbulb_romps(pressure, t_mixed, q_mixed)

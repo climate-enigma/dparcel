@@ -5,16 +5,15 @@
 import numpy as np
 
 import metpy.calc as mpcalc
-from metpy.units import units
-from metpy.units import concatenate
+from metpy.units import units, concatenate
 import metpy.constants as const
 
 from scipy.interpolate import interp1d
 from scipy.integrate import solve_ivp
 
-from .thermo import descend, equilibrate, equivalent_potential_temperature
-from .thermo import saturation_specific_humidity, moist_lapse
-from .thermo import saturation_equivalent_potential_temperature
+from .thermo import (descend, equilibrate, equivalent_potential_temperature,
+                     saturation_specific_humidity, moist_lapse, mix,
+                     saturation_equivalent_potential_temperature)
 
 
 class Parcel:
@@ -54,11 +53,14 @@ class Parcel:
         p_initial = self._env.pressure(height)
         p_final = self._env.pressure(height - step)
 
-        # steps 1 and 2: mixing and phase equilibration
-        t_eq, q_eq, l_eq = equilibrate(
-            p_initial, t_parcel, q_parcel, l_parcel,
-            self._env.temperature(height), self._env.specific_humidity(height),
-            self._env.liquid_ratio(height), rate, step)
+        # step 1: mix parcel and environment
+        t_mixed = mix(t_parcel, self._env.temperature(height), rate, step)
+        q_mixed = mix(
+            q_parcel, self._env.specific_humidity(height), rate,step)
+        l_mixed = mix(l_parcel, self._env.liquid_ratio(height), rate, step)
+
+        # step 2: ensure parcel is in phase equilibrium
+        t_eq, q_eq, l_eq = equilibrate(p_initial, t_mixed, q_mixed, l_mixed)
 
         # step 3: dry or moist adiabatic descent
         t_final, q_final, l_final = descend(
