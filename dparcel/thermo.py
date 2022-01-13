@@ -891,52 +891,50 @@ def mix(parcel, environment, rate, dz):
     return parcel + rate * (environment - parcel) * dz
 
 
-def equilibrate(pressure, t_mixed, q_mixed, l_mixed):
+def equilibrate(pressure, t_initial, q_initial, l_initial):
     """
     Find parcel properties after phase equilibration.
 
     Args:
         pressure: Pressure during the change (constant).
-        t_mixed: Initial temperature of the parcel.
-        q_mixed: Initial specific humidity of the parcel.
-        l_mixed: Initial ratio of liquid mass to parcel mass.
+        t_initial: Initial temperature of the parcel.
+        q_initial: Initial specific humidity of the parcel.
+        l_initial: Initial ratio of liquid mass to parcel mass.
 
     Returns:
         A tuple containing the final parcel temperature, specific
             humidity and liquid ratio.
     """
-    q_mixed_saturated = saturation_specific_humidity(pressure, t_mixed)
+    q_sat_initial = saturation_specific_humidity(pressure, t_initial)
+    if ((q_initial <= q_sat_initial and l_initial <= 0)
+            or q_initial == q_sat_initial):
+        # parcel is already in equilibrium
+        return t_initial, q_initial, np.maximum(l_initial, 0)
 
-    if q_mixed > q_mixed_saturated:
-        # we need to condense water vapour
-        t_final = wetbulb_romps(pressure, t_mixed, q_mixed)
-        q_final = saturation_specific_humidity(pressure, t_final)
-        l_final = l_mixed + q_mixed - q_final
-        return (t_final, q_final, l_final)
+    # to find the initial temperature after evaporation,first assume
+    # that the parcel becomes saturated and therefore attains its
+    # wet bulb temperature
+    t_final = wetbulb_romps(pressure, t_initial, q_initial)
+    q_final = saturation_specific_humidity(pressure, t_final)
+    l_final = q_initial + l_initial - q_final
 
-    if q_mixed < q_mixed_saturated and l_mixed > 0:
-        # we need to evaporate liquid water.
-        # if all liquid evaporates:
-        t_all_evap = t_mixed + temperature_change(l_mixed)
-        q_all_evap_saturated = saturation_specific_humidity(
-            pressure, t_all_evap)
+    # check if the assumption was realistic
+    if l_final < 0:
+        # if the liquid content resulting from evaporation to the point
+        # of saturation is negative, this indicates that l_initial is
+        # not large enough to saturate the parcel. We find the actual
+        # resulting temperature using the conservation of equivalent
+        # potential temperature during the evaporation process:
+        # we use Newton's method to seek the temperature such that
+        # the final equivalent potential temperature is unchanged.
+        # As an initial guess, assume the temperature change is -L*dq/c_p
+        t_final = t_initial - (const.water_heat_vaporization
+                               * l_initial/const.dry_air_spec_heat_press)
+        q_final = q_initial + l_initial
+        l_final = 0*units.dimensionless
+        for _ in range(3):
+            value, slope = equivalent_potential_temperature(
+                pressure, t_final, q_final, prime=True)
+            t_final -= (value - theta_e)/slope
 
-        if q_mixed + l_mixed <= q_all_evap_saturated:
-            # the parcel is able to evaporate all its liquid water while
-            # remaining subsaturated
-            return (t_all_evap, q_mixed + l_mixed, 0*units.dimensionless)
-
-        # evaporating all liquid water would supersaturate the
-        # parcel, so its final temperature is the wet bulb
-        # temperature
-        t_final = wetbulb_romps(pressure, t_mixed, q_mixed)
-        q_final = saturation_specific_humidity(pressure, t_final)
-        l_final = l_mixed + q_mixed - q_final
-        return (t_final, q_final, l_final)
-
-    if q_mixed < q_mixed_saturated and l_mixed <= 0:
-        # parcel is already in equilibrium, no action needed
-        return (t_mixed, q_mixed, 0*units.dimensionless)
-
-    # parcel is perfectly saturated, no action needed
-    return (t_mixed, q_mixed, l_mixed)
+    return t_final, q_final, l_final
