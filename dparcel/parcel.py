@@ -357,26 +357,6 @@ class Parcel:
         ).m_as(units.meter/units.second**2)
 
         # collect everything in a bunch object
-        class MotionResult:
-            """Container for calculation results."""
-
-            def __init__(self):
-                """Instantiates a MotionResult."""
-                self.height = None
-                self.velocity = None
-                self.temperature = None
-                self.specific_humidity = None
-                self.liquid_ratio = None
-                self.density = None
-                self.buoyancy = None
-                self.neutral_buoyancy_time = None
-                self.hit_ground_time = None
-                self.min_height_time = None
-                self.neutral_buoyancy_height = None
-                self.neutral_buoyancy_velocity = None
-                self.hit_ground_velocity = None
-                self.min_height = None
-
         result = MotionResult()
         result.height = height*units.meter
         result.velocity = velocity*units.meter/units.second
@@ -920,26 +900,6 @@ class FastParcel:
         ).m_as(units.meter/units.second**2)
 
         # collect everything in a bunch object
-        class MotionResult:
-            """Container for calculation results."""
-
-            def __init__(self):
-                """Instantiates a MotionResult."""
-                self.height = None
-                self.velocity = None
-                self.temperature = None
-                self.specific_humidity = None
-                self.liquid_ratio = None
-                self.density = None
-                self.buoyancy = None
-                self.neutral_buoyancy_time = None
-                self.hit_ground_time = None
-                self.min_height_time = None
-                self.neutral_buoyancy_height = None
-                self.neutral_buoyancy_velocity = None
-                self.hit_ground_velocity = None
-                self.min_height = None
-
         result = MotionResult()
         result.height = height*units.meter
         result.velocity = velocity*units.meter/units.second
@@ -958,3 +918,24 @@ class FastParcel:
             hit_ground_velocity*units.meter/units.second)
         result.min_height = min_height_height*units.meter
         return result
+
+
+class MotionResult:
+    """Container for calculation results."""
+
+    def __init__(self):
+        """Instantiates a MotionResult."""
+        self.height = None
+        self.velocity = None
+        self.temperature = None
+        self.specific_humidity = None
+        self.liquid_ratio = None
+        self.density = None
+        self.buoyancy = None
+        self.neutral_buoyancy_time = None
+        self.hit_ground_time = None
+        self.min_height_time = None
+        self.neutral_buoyancy_height = None
+        self.neutral_buoyancy_velocity = None
+        self.hit_ground_velocity = None
+        self.min_height = None
