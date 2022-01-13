@@ -12,8 +12,7 @@ import numpy as np
 
 import metpy.calc as mpcalc
 import metpy.constants as const
-from metpy.units import units
-from metpy.units import concatenate
+from metpy.units import units, concatenate
 
 from scipy.special import lambertw
 from scipy.optimize import minimize_scalar
@@ -174,6 +173,68 @@ def equivalent_potential_temperature(p, Tk, q, prime=False):
     # derivative of log(equivalent potential temperature) w.r.t. temperature
     dlogthetae_dTk = (dlogthetadl_dTk
                       - 3036*units.kelvin/Tl**2 * r*(1 + 0.448*r)*dTl_dTk)
+
+    return thetae, thetae*dlogthetae_dTk
+
+
+def saturation_equivalent_potential_temperature(p, Tk, prime=False):
+    """
+    Calculate saturation equivalent potential temperature.
+
+    Uses the approximation of theta-e given in eq. 39 of Bolton (1980).
+    Variable names follow the notation of Bolton.
+
+    Args:
+        p: Pressure.
+        Tk: Temperature.
+        prime: Whether or not to also return the derivative of
+            theta-e with respect to temperature at the given temperature
+            and pressure (optional, defaults to False).
+
+    Returns:
+        The saturation equivalent potential temperature (and its
+        derivative w.r.t. temperature if prime=True).
+
+    References:
+        Bolton, D 1980, ‘The Computation of Equivalent Potential
+        Temperature’, Monthly weather review, vol. 108, no. 7,
+        pp. 1046–1053.
+    """
+    # ensure correct units
+    Tk = Tk.to(units.kelvin)
+
+    # constants
+    a = 17.67*units.dimensionless
+    b = 243.5*units.kelvin
+    C = 273.15*units.kelvin
+    e0 = 6.112*units.mbar  # saturation vapour pressure at 0C (mbar)
+    epsilon = const.epsilon
+    kappa = const.kappa
+
+    # other variables
+    es = e0*np.exp(a*(Tk - C)/(Tk - C + b))  # sat. vapour pressure
+    rs = epsilon*es/(p - es)  # sat. mixing ratio
+
+    # potential temperature of dry air
+    thetadl = Tk*(1000*units.mbar/(p - es))**kappa
+    # equivalent potential temperature
+    thetae = thetadl*np.exp((3036*units.kelvin/Tk - 1.78)*rs*(1 + 0.448*rs))
+
+    if prime is False:
+        return thetae
+
+    # derivative of sat. vapour pressure w.r.t. temperature
+    des_dTk = a*b*es/(Tk - C + b)**2
+    # derivative of sat. mixing ratio w.r.t. temperature
+    drs_dTk = epsilon*p*des_dTk/(p - es)**2
+    # derivative of log(potential temperature of dry air)
+    dlogthetadl_dTk = 1/Tk + kappa*des_dTk/(p - es)
+    # derivative of log(theta-e) w.r.t. temperature
+    dlogthetae_dTk = (
+        dlogthetadl_dTk
+        - 3036*units.kelvin*rs*(1 + 0.448*rs)/Tk**2
+        + (3036*units.kelvin/Tk - 1.78)*drs_dTk*(1 + 2*0.448*rs)
+    )
 
     return thetae, thetae*dlogthetae_dTk
 
@@ -830,63 +891,50 @@ def mix(parcel, environment, rate, dz):
     return parcel + rate * (environment - parcel) * dz
 
 
-def equilibrate(
-        pressure, t_parcel, q_parcel, l_parcel, t_env, q_env, l_env, rate, dz):
+def equilibrate(pressure, t_initial, q_initial, l_initial):
     """
-    Find parcel properties after entrainment and phase equilibration.
+    Find parcel properties after phase equilibration.
 
     Args:
         pressure: Pressure during the change (constant).
-        t_parcel: Initial temperature of the parcel.
-        q_parcel: Initial specific humidity of the parcel.
-        l_parcel: Initial ratio of liquid mass to parcel mass.
-        t_env: Temperature of the environment.
-        q_env: Specific humidity of the environment.
-        l_env: Liquid ratio of the environment.
-        rate: Entrainment rate.
-        dz: Distance descended.
+        t_initial: Initial temperature of the parcel.
+        q_initial: Initial specific humidity of the parcel.
+        l_initial: Initial ratio of liquid mass to parcel mass.
 
     Returns:
         A tuple containing the final parcel temperature, specific
             humidity and liquid ratio.
     """
-    # first mix parcel and environment without phase change
-    t_mixed = mix(t_parcel, t_env, rate, dz)
-    q_mixed = mix(q_parcel, q_env, rate, dz)
-    l_mixed = mix(l_parcel, l_env, rate, dz)
-    q_mixed_saturated = saturation_specific_humidity(pressure, t_mixed)
+    q_sat_initial = saturation_specific_humidity(pressure, t_initial)
+    if ((q_initial <= q_sat_initial and l_initial <= 0)
+            or q_initial == q_sat_initial):
+        # parcel is already in equilibrium
+        return t_initial, q_initial, np.maximum(l_initial, 0)
 
-    # now ensure that the parcel is in phase equilibrium
-    if q_mixed > q_mixed_saturated:
-        # we need to condense water vapour
-        t_final = wetbulb_romps(pressure, t_mixed, q_mixed)
-        q_final = saturation_specific_humidity(pressure, t_final)
-        l_final = l_mixed + q_mixed - q_final
-        return (t_final, q_final, l_final)
+    # to find the initial temperature after evaporation,first assume
+    # that the parcel becomes saturated and therefore attains its
+    # wet bulb temperature
+    t_final = wetbulb_romps(pressure, t_initial, q_initial)
+    q_final = saturation_specific_humidity(pressure, t_final)
+    l_final = q_initial + l_initial - q_final
 
-    if q_mixed < q_mixed_saturated and l_mixed > 0:
-        # we need to evaporate liquid water.
-        # if all liquid evaporates:
-        t_all_evap = t_mixed + temperature_change(l_mixed)
-        q_all_evap_saturated = saturation_specific_humidity(
-            pressure, t_all_evap)
+    # check if the assumption was realistic
+    if l_final < 0:
+        # if the liquid content resulting from evaporation to the point
+        # of saturation is negative, this indicates that l_initial is
+        # not large enough to saturate the parcel. We find the actual
+        # resulting temperature using the conservation of equivalent
+        # potential temperature during the evaporation process:
+        # we use Newton's method to seek the temperature such that
+        # the final equivalent potential temperature is unchanged.
+        # As an initial guess, assume the temperature change is -L*dq/c_p
+        t_final = t_initial - (const.water_heat_vaporization
+                               * l_initial/const.dry_air_spec_heat_press)
+        q_final = q_initial + l_initial
+        l_final = 0*units.dimensionless
+        for _ in range(3):
+            value, slope = equivalent_potential_temperature(
+                pressure, t_final, q_final, prime=True)
+            t_final -= (value - theta_e)/slope
 
-        if q_mixed + l_mixed <= q_all_evap_saturated:
-            # the parcel is able to evaporate all its liquid water while
-            # remaining subsaturated
-            return (t_all_evap, q_mixed + l_mixed, 0*units.dimensionless)
-
-        # evaporating all liquid water would supersaturate the
-        # parcel, so its final temperature is the wet bulb
-        # temperature
-        t_final = wetbulb_romps(pressure, t_mixed, q_mixed)
-        q_final = saturation_specific_humidity(pressure, t_final)
-        l_final = l_mixed + q_mixed - q_final
-        return (t_final, q_final, l_final)
-
-    if q_mixed < q_mixed_saturated and l_mixed <= 0:
-        # parcel is already in equilibrium, no action needed
-        return (t_mixed, q_mixed, 0*units.dimensionless)
-
-    # parcel is perfectly saturated, no action needed
-    return (t_mixed, q_mixed, l_mixed)
+    return t_final, q_final, l_final

@@ -19,3 +19,5 @@ References
 .. [sumrall_2020] Sumrall, Paula (2020). “Using DCIN and DCAPE to evaluate severe surface winds in the case of elevated convection”. masters thesis. University of Missouri.
 
 .. [thayer-calder_2013] Thayer-Calder, Katherine (2013). “Downdraft impacts on tropical convection”. PhD thesis. Colorado State University.
+
+.. [sherwood_et_al_2013] SHERWOOD, SC, HERNANDEZ-DECKERS, D, COLIN, M & ROBINSON, F 2013, ‘Slippery Thermals and the Cumulus Entrainment Paradox’, Journal of the atmospheric sciences, vol. 70, no. 8, pp. 2426–2442.

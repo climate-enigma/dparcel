@@ -11,8 +11,7 @@ instance using an idealised sounding.
 import numpy as np
 
 import metpy.calc as mpcalc
-from metpy.units import units
-from metpy.units import concatenate
+from metpy.units import units, concatenate
 import metpy.constants as const
 
 from scipy.interpolate import interp1d

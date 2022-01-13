@@ -22,5 +22,6 @@ Contents
    introduction
    literature
    methods
+   alternative_method
    references
 
