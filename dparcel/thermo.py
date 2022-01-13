@@ -928,6 +928,8 @@ def equilibrate(pressure, t_initial, q_initial, l_initial):
         # we use Newton's method to seek the temperature such that
         # the final equivalent potential temperature is unchanged.
         # As an initial guess, assume the temperature change is -L*dq/c_p
+        theta_e = equivalent_potential_temperature(
+            pressure, t_initial, q_initial)
         t_final = t_initial - (const.water_heat_vaporization
                                * l_initial/const.dry_air_spec_heat_press)
         q_final = q_initial + l_initial
