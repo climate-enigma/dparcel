@@ -747,7 +747,7 @@ class FastParcel(Environment):
 
     def motion(
             self, time, initial_height, initial_velocity, t_initial,
-            q_initial, l_initial, rate, liquid_correction=True, improve=5):
+            q_initial, l_initial, rate, liquid_correction=True, improve=1):
         """
         Solve the equation of motion for the parcel.
 
@@ -810,7 +810,7 @@ class FastParcel(Environment):
             initial_height, q_initial, l_initial, rate)
         z_switch, t_switch = self.transition_point(
             initial_height, t_initial, l_initial,
-            theta_e, total_water, improve=improve)
+            theta_e, total_water, improve=5)
 
         def motion_ode(_, state):
             """Define the parcel's equation of motion."""

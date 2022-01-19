@@ -252,7 +252,8 @@ def idealised_sounding(relative_humidity, info='', name=''):
         name: Short name for the sounding, e.g. 'Sydney' (optional).
 
     Returns:
-        An Environment instance.
+        Arrays of pressure, height, temperature and specific humidity
+        in the sounding.
     """
     # generate discrete temperature profile
     pressure = np.arange(1013.25, 200, -5)*units.mbar
