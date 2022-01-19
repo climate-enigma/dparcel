@@ -14,7 +14,7 @@ from scipy.integrate import solve_ivp
 from .thermo import (descend, equilibrate, equivalent_potential_temperature,
                      saturation_specific_humidity, moist_lapse, mix,
                      saturation_equivalent_potential_temperature)
-from .environment import Environment
+from .environment import Environment, idealised_sounding
 
 
 class Parcel(Environment):
@@ -366,6 +366,24 @@ class Parcel(Environment):
             hit_ground_velocity*units.meter/units.second)
         result.min_height = min_height_height*units.meter
         return result
+
+
+class IdealisedParcel(Parcel):
+    """Parcel in an idealised sounding."""
+
+    def __init__(self, relative_humidity):
+        """
+        Creates an instance of IdealisedParcel.
+
+        Args:
+            relative_humidity: Relative humidity above the boundary layer.
+
+        Returns:
+            An instance of IdealisedParcel.
+        """
+        pressure, height, temperature, dewpoint = idealised_sounding(
+            relative_humidity)
+        super().__init__(pressure, height, temperature, dewpoint)
 
 
 class FastParcel(Environment):
@@ -899,6 +917,24 @@ class FastParcel(Environment):
             hit_ground_velocity*units.meter/units.second)
         result.min_height = min_height_height*units.meter
         return result
+
+
+class IdealisedFastParcel(FastParcel):
+    """FastParcel in an idealised sounding."""
+
+    def __init__(self, relative_humidity):
+        """
+        Creates an instance of IdealisedFastParcel.
+
+        Args:
+            relative_humidity: Relative humidity above the boundary layer.
+
+        Returns:
+            An instance of IdealisedFastParcel.
+        """
+        pressure, height, temperature, dewpoint = idealised_sounding(
+            relative_humidity)
+        super().__init__(pressure, height, temperature, dewpoint)
 
 
 class MotionResult:

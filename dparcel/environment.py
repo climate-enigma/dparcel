@@ -321,6 +321,4 @@ def idealised_sounding(relative_humidity, info='', name=''):
         dzdp, (1013.25e2, np.min(pressure.m_as(units.pascal))),
         [0], t_eval=pressure.m_as(units.pascal)).y*units.meter
 
-    return Environment(
-        pressure, np.squeeze(height), temperature, dewpoint, info=info,
-        name=name)
+    return pressure, np.squeeze(height), temperature, dewpoint
