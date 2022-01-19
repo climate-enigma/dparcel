@@ -14,20 +14,11 @@ from scipy.integrate import solve_ivp
 from .thermo import (descend, equilibrate, equivalent_potential_temperature,
                      saturation_specific_humidity, moist_lapse, mix,
                      saturation_equivalent_potential_temperature)
+from .environment import Environment
 
 
-class Parcel:
+class Parcel(Environment):
     """Class for parcel theory calculations with entrainment."""
-
-    def __init__(self, environment):
-        """
-        Instantiate a Parcel.
-
-        Args:
-            environment: An instance of Environment on which the
-                calculations are to be performed.
-        """
-        self._env = environment
 
     def _entrain_discrete(self, height, state, rate, step, kind='pseudo'):
         """
@@ -50,14 +41,14 @@ class Parcel:
         t_parcel = state[0]
         q_parcel = state[1]
         l_parcel = state[2]
-        p_initial = self._env.pressure(height)
-        p_final = self._env.pressure(height - step)
+        p_initial = self.pressure(height)
+        p_final = self.pressure(height - step)
 
         # step 1: mix parcel and environment
-        t_mixed = mix(t_parcel, self._env.temperature(height), rate, step)
+        t_mixed = mix(t_parcel, self.temperature(height), rate, step)
         q_mixed = mix(
-            q_parcel, self._env.specific_humidity(height), rate,step)
-        l_mixed = mix(l_parcel, self._env.liquid_ratio(height), rate, step)
+            q_parcel, self.specific_humidity(height), rate,step)
+        l_mixed = mix(l_parcel, self.liquid_ratio(height), rate, step)
 
         # step 2: ensure parcel is in phase equilibrium
         t_eq, q_eq, l_eq = equilibrate(p_initial, t_mixed, q_mixed, l_mixed)
@@ -132,7 +123,7 @@ class Parcel:
 
         return t_out, q_out, l_out
 
-    def density(
+    def parcel_density(
             self, height, initial_height, t_initial, q_initial, l_initial,
             rate, step=50*units.meter, kind='pseudo', liquid_correction=True):
         """
@@ -158,7 +149,7 @@ class Parcel:
             height, t_initial, q_initial, l_initial, rate, step=step,
             reference_height=initial_height, kind=kind)
         r_final = mpcalc.mixing_ratio_from_specific_humidity(q_final)
-        p_final = self._env.pressure(height)
+        p_final = self.pressure(height)
 
         gas_density = mpcalc.density(p_final, t_final, r_final)
         return gas_density/(1 - l_final.m*liquid_correction)
@@ -185,8 +176,8 @@ class Parcel:
         Returns:
             The buoyancy of the parcel at <height>.
         """
-        env_density = self._env.density(height)
-        parcel_density = self.density(
+        env_density = self.density(height)
+        parcel_density = self.parcel_density(
             height, initial_height, t_initial, q_initial, l_initial, rate,
             step, kind=kind, liquid_correction=liquid_correction)
 
@@ -345,13 +336,13 @@ class Parcel:
         liquid_ratio[:len(sol.y[0, :])] = l_profile.m
 
         r_profile = mpcalc.mixing_ratio_from_specific_humidity(q_profile)
-        p_profile = self._env.pressure(sol.y[0, :]*units.meter)
+        p_profile = self.pressure(sol.y[0, :]*units.meter)
         gas_density = mpcalc.density(p_profile, t_profile, r_profile)
         density_profile = gas_density/(1 - l_profile.m*liquid_correction)
         density[:len(sol.y[0, :])] = (
             density_profile).m_as(units.kilogram/units.meter**3)
 
-        env_density = self._env.density(sol.y[0, :]*units.meter)
+        env_density = self.density(sol.y[0, :]*units.meter)
         buoyancy[:len(sol.y[0, :])] = (
             (env_density - density_profile)/density_profile*const.g
         ).m_as(units.meter/units.second**2)
@@ -377,20 +368,10 @@ class Parcel:
         return result
 
 
-class FastParcel:
+class FastParcel(Environment):
     """Class for improved parcel theory calculations with entrainment."""
 
-    def __init__(self, environment):
-        """
-        Instantiate a FastParcel.
-
-        Args:
-            environment: An instance of Environment on which the
-                calculations are to be performed.
-        """
-        self._env = environment
-
-    def equivalent_potential_temperature(
+    def parcel_equivalent_potential_temperature(
             self, initial_height, initial_temperature,
             initial_specific_humidity, entrainment_rate):
         """
@@ -410,7 +391,7 @@ class FastParcel:
             the parcel, given a height below the starting height.
         """
         # determine the initial condition for the ODE
-        initial_pressure = self._env.pressure(initial_height)
+        initial_pressure = self.pressure(initial_height)
         initial_theta_e = equivalent_potential_temperature(
             initial_pressure, initial_temperature, initial_specific_humidity)
 
@@ -427,7 +408,7 @@ class FastParcel:
 
         def dtheta_e_dz(height, theta_e):
             """Find the derivative of parcel theta-e w.r.t. height."""
-            env_theta_e = self._env.equivalent_potential_temperature(
+            env_theta_e = self.equivalent_potential_temperature(
                 height*units.meter
             ).m_as(units.kelvin)
             return epsilon(height)*(theta_e - env_theta_e)
@@ -485,8 +466,8 @@ class FastParcel:
         def dQ_dz(height, parcel_water):
             """Find the derivative of parcel water content w.r.t. height."""
             env_water = (
-                self._env.specific_humidity(height*units.meter)
-                + self._env.liquid_ratio(height*units.meter)
+                self.specific_humidity(height*units.meter)
+                + self.liquid_ratio(height*units.meter)
             ).m_as(units.dimensionless)
             return epsilon(height)*(parcel_water - env_water)
 
@@ -536,8 +517,8 @@ class FastParcel:
         water = total_water(height)
 
         # obtain a first guess for temperature using Davies-Jones (2008)
-        pressure = self._env.pressure(height)
-        initial_pressure = self._env.pressure(initial_height)
+        pressure = self.pressure(height)
+        initial_pressure = self.pressure(initial_height)
         temperature = moist_lapse(
             pressure, initial_temperature, initial_pressure,
             method='fast', improve=False)
@@ -578,8 +559,8 @@ class FastParcel:
         q_sol = total_water(height)
 
         # use a dry adiabatic first guess for temperature
-        pressure = self._env.pressure(height)
-        initial_pressure = self._env.pressure(initial_height)
+        pressure = self.pressure(height)
+        initial_pressure = self.pressure(initial_height)
         temperature = mpcalc.dry_lapse(
             pressure, initial_temperature, initial_pressure)
 
@@ -741,7 +722,7 @@ class FastParcel:
             theta_e, total_water, improve)
         r_parcel = mpcalc.mixing_ratio_from_specific_humidity(q_parcel)
         tv_parcel = mpcalc.virtual_temperature(t_parcel, r_parcel)
-        tv_env = self._env.virtual_temperature(height)
+        tv_env = self.virtual_temperature(height)
         # if liquid correction is off, set liquid ratio to 0
         l = l_parcel.m_as(units.dimensionless)*liquid_correction
         return ((1 - l)*tv_parcel - tv_env)/tv_env*const.g
@@ -805,7 +786,7 @@ class FastParcel:
         """
         # theta-e and total water as functions of height, and the
         # moist-to-dry transition point, need only be determined once
-        theta_e = self.equivalent_potential_temperature(
+        theta_e = self.parcel_equivalent_potential_temperature(
             initial_height, t_initial, q_initial, rate)
         total_water = self.water_content(
             initial_height, q_initial, l_initial, rate)
@@ -888,13 +869,13 @@ class FastParcel:
         liquid_ratio[:len(sol.y[0, :])] = l_profile.m
 
         r_profile = mpcalc.mixing_ratio_from_specific_humidity(q_profile)
-        p_profile = self._env.pressure(sol.y[0, :]*units.meter)
+        p_profile = self.pressure(sol.y[0, :]*units.meter)
         gas_density = mpcalc.density(p_profile, t_profile, r_profile)
         density_profile = gas_density/(1 - l_profile.m*liquid_correction)
         density[:len(sol.y[0, :])] = (
             density_profile).m_as(units.kilogram/units.meter**3)
 
-        env_density = self._env.density(sol.y[0, :]*units.meter)
+        env_density = self.density(sol.y[0, :]*units.meter)
         buoyancy[:len(sol.y[0, :])] = (
             (env_density - density_profile)/density_profile*const.g
         ).m_as(units.meter/units.second**2)
