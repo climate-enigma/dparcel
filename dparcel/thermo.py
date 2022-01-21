@@ -63,11 +63,14 @@ def moist_lapse(
                     pressure.item(), initial_temperature.item(),
                     reference_pressure=reference_pressure.item())
         else:
-            pressure = pressure[1:]
-            temperature = mpcalc.moist_lapse(
-                pressure, initial_temperature,
-                reference_pressure=reference_pressure)
-            return concatenate([initial_temperature, temperature])
+            if reference_pressure == pressure[0]:
+                pressure = pressure[1:]
+                temperature = mpcalc.moist_lapse(
+                    pressure, initial_temperature,
+                    reference_pressure=reference_pressure)
+                return concatenate([initial_temperature, temperature])
+            return mpcalc.moist_lapse(
+                pressure, initial_temperature, reference_pressure)
     elif method == 'fast':
         # parcel assumed to be saturated at all times
         q_initial = saturation_specific_humidity(
@@ -669,7 +672,7 @@ def reversible_lapse_daviesjones(
 
     # initial specific humidity is saturated specific humidity
     q_initial = saturation_specific_humidity(
-        pressure[0]*units.mbar, initial_temperature).m
+        reference_pressure*units.mbar, initial_temperature).m
 
     # total mixing ratio (liquid + vapour)
     Q = ((q_initial + initial_liquid_ratio)
