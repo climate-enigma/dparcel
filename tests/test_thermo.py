@@ -258,3 +258,143 @@ def test_descend_dry():
     assert_almost_equal(actual_t, truth_t, 3)
     assert actual_q == truth_q
     assert actual_l == truth_l
+
+def test_descent_moist_pseudoadiabatic():
+    actual_t, actual_q, actual_l = descend(
+        600*units.mbar, -20*units.celsius,
+        0.001565585489192481*units.dimensionless,
+        4e-3*units.dimensionless, 500*units.mbar)
+    truth_t = -10.00587602262874*units.celsius
+    truth_q = 0.002976636458009126*units.dimensionless
+    truth_l = 0.0025889490311833555*units.dimensionless
+    assert_almost_equal(actual_t, truth_t, 3)
+    assert_almost_equal(actual_q, truth_q, 6)
+    assert_almost_equal(actual_l, truth_l, 6)
+
+def test_descent_moist_reversible():
+    actual_t, actual_q, actual_l = descend(
+        600*units.mbar, -20*units.celsius,
+        0.001565585489192481*units.dimensionless,
+        4e-3*units.dimensionless, 500*units.mbar, kind='reversible')
+    truth_t = -10.167217087998836*units.celsius
+    truth_q = 0.002938882218753567*units.dimensionless
+    truth_l = 0.002626703270438914*units.dimensionless
+    assert_almost_equal(actual_t, truth_t, 3)
+    assert_almost_equal(actual_q, truth_q, 6)
+    assert_almost_equal(actual_l, truth_l, 6)
+
+def test_descent_mixed_pseudoadiabatic():
+    actual_t, actual_q, actual_l = descend(
+        800*units.mbar, -20*units.celsius,
+        0.001565585489192481*units.dimensionless,
+        4e-3*units.dimensionless, 500*units.mbar)
+    truth_t = 278.7669639040529*units.kelvin
+    truth_q = 0.005565585489192481*units.dimensionless
+    truth_l = 0*units.dimensionless
+    assert_almost_equal(actual_t, truth_t, 3)
+    assert actual_q == truth_q
+    assert actual_l == truth_l
+
+def test_descent_mixed_reversible():
+    actual_t, actual_q, actual_l = descend(
+        800*units.mbar, -20*units.celsius,
+        0.001565585489192481*units.dimensionless,
+        4e-3*units.dimensionless, 500*units.mbar, kind='reversible')
+    truth_t = 278.7647125951823*units.kelvin
+    truth_q = 0.005565585489192481*units.dimensionless
+    truth_l = 0*units.dimensionless
+    assert_almost_equal(actual_t, truth_t, 3)
+    assert actual_q == truth_q
+    assert actual_l == truth_l
+
+def test_descend_invalid_method():
+    with pytest.raises(ValueError):
+        _ = descend(
+            800*units.mbar, -20*units.celsius,
+            0.001565585489192481*units.dimensionless,
+            4e-3*units.dimensionless, 500*units.mbar, kind='hello')
+
+def test_mix():
+    parcel = [270, 280, 290]*units.kelvin
+    environment = [280, 280, 280]*units.kelvin
+    rate = [0.5, 1, 0.1]*(1/units.km)
+    dz = 1*units.km
+    actual = mix(parcel, environment, rate, dz)
+    truth = [275.0, 280.0, 289.0]*units.kelvin
+    assert_array_equal(actual, truth)
+
+def test_equilibrate_subsaturated_no_liquid():
+    pressure = 1000*units.mbar
+    t_initial = 10*units.celsius
+    q_initial = 5e-3*units.dimensionless
+    l_initial = 0*units.dimensionless
+    actual_t, actual_q, actual_l = equilibrate(
+        pressure, t_initial, q_initial, l_initial)
+    assert actual_t == t_initial
+    assert actual_q == q_initial
+    assert actual_l == l_initial
+
+def test_equilibrate_saturated_with_liquid():
+    pressure = 1000*units.mbar
+    t_initial = 10*units.celsius
+    q_initial = 0.007668039921398619*units.dimensionless
+    l_initial = 5e-3*units.dimensionless
+    actual_t, actual_q, actual_l = equilibrate(
+        pressure, t_initial, q_initial, l_initial)
+    assert actual_t == t_initial
+    assert actual_q == q_initial
+    assert actual_l == l_initial
+
+def test_equilibrate_subsaturated_with_high_liquid():
+    pressure = 1000*units.mbar
+    t_initial = 10*units.celsius
+    q_initial = 0.006*units.dimensionless
+    l_initial = 5e-3*units.dimensionless
+    actual_t, actual_q, actual_l = equilibrate(
+        pressure, t_initial, q_initial, l_initial)
+    truth_t = 281.2471775273162*units.kelvin
+    truth_q = 0.006740497179992207*units.dimensionless
+    truth_l = 0.004259502820007793*units.dimensionless
+    assert_almost_equal(actual_t, truth_t, 3)
+    assert_almost_equal(actual_q, truth_q, 6)
+    assert_almost_equal(actual_l, truth_l, 6)
+
+def test_equilibrate_subsaturated_with_low_liquid():
+    pressure = 1000*units.mbar
+    t_initial = 10*units.celsius
+    q_initial = 0.003*units.dimensionless
+    l_initial = 1e-3*units.dimensionless
+    actual_t, actual_q, actual_l = equilibrate(
+        pressure, t_initial, q_initial, l_initial)
+    truth_t = 280.5424120530777*units.kelvin
+    assert_almost_equal(actual_t, truth_t, 3)
+    assert actual_q == 4e-3*units.dimensionless
+    assert actual_l == 0*units.dimensionless
+
+def test_equilibrate_supersaturated_no_liquid():
+    pressure = 1000*units.mbar
+    t_initial = 10*units.celsius
+    q_initial = 9e-3*units.dimensionless
+    l_initial = 0*units.dimensionless
+    actual_t, actual_q, actual_l = equilibrate(
+        pressure, t_initial, q_initial, l_initial)
+    truth_t = 284.5901525593089*units.kelvin
+    truth_q = 0.008443611342606088*units.dimensionless
+    truth_l = 0.0005563886573939116*units.dimensionless
+    assert_almost_equal(actual_t, truth_t, 3)
+    assert_almost_equal(actual_q, truth_q, 6)
+    assert_almost_equal(actual_l, truth_l, 6)
+
+def test_equilibrate_supersaturated_with_liquid():
+    pressure = 1000*units.mbar
+    t_initial = 10*units.celsius
+    q_initial = 9e-3*units.dimensionless
+    l_initial = 2e-3*units.dimensionless
+    actual_t, actual_q, actual_l = equilibrate(
+        pressure, t_initial, q_initial, l_initial)
+    truth_t = 284.5901525593089*units.kelvin
+    truth_q = 0.008443611342606088*units.dimensionless
+    truth_l = 0.0025563886573939116*units.dimensionless
+    assert_almost_equal(actual_t, truth_t, 3)
+    assert_almost_equal(actual_q, truth_q, 6)
+    assert_almost_equal(actual_l, truth_l, 6)
