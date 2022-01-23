@@ -2,7 +2,6 @@
 # Distributed under the terms of the BSD 3-Clause License.
 """Tests for dparcel.thermo."""
 
-import shelve
 import pytest
 from metpy.testing import assert_almost_equal, assert_array_equal
 from metpy.units import units
@@ -13,7 +12,6 @@ from dparcel.thermo import (
     saturation_specific_humidity,
     equivalent_potential_temperature,
     saturation_equivalent_potential_temperature,
-    dcape_dcin,
     lcl_romps,
     wetbulb_romps,
     wetbulb_potential_temperature,
@@ -131,24 +129,6 @@ def test_saturation_equivalent_potential_temperature_prime():
     truth_prime = [1.5827669621042701, 1.3981892491580596]*units.dimensionless
     assert_almost_equal(actual, truth, 3)
     assert_almost_equal(actual_prime, truth_prime, 6)
-
-def test_dcape_dcin():
-    """Test dcape_dcin on an idealised and a real sounding."""
-    with shelve.open('tests/test_soundings') as db:
-        env_idealised = db['idealised']
-        env_real = db['real']
-
-    actual_dcape_idealised, actual_dcin_idealised = dcape_dcin(env_idealised)
-    actual_dcape_real, actual_dcin_real = dcape_dcin(env_real)
-    truth_dcape_idealised = 230.4148507777093*units.meter**2/units.second**2
-    truth_dcin_idealised = -34.705790189135776*units.meter**2/units.second**2
-    truth_dcape_real = 123.01795081346282*units.meter**2/units.second**2
-    truth_dcin_real = -450.43506401330427*units.meter**2/units.second**2
-
-    assert_almost_equal(actual_dcape_idealised, truth_dcape_idealised, 1)
-    assert_almost_equal(actual_dcin_idealised, truth_dcin_idealised, 1)
-    assert_almost_equal(actual_dcape_real, truth_dcape_real, 1)
-    assert_almost_equal(actual_dcin_real, truth_dcin_real, 1)
 
 def test_lcl_romps():
     """Test the Romps LCL calculation."""
