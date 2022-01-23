@@ -169,7 +169,11 @@ class Environment:
         """Find the environmental specific humidity at a given height."""
         pressure = self.pressure(height)
         dewpoint = self.dewpoint(height)
-        return mpcalc.specific_humidity_from_dewpoint(pressure, dewpoint)
+        q = mpcalc.specific_humidity_from_dewpoint(
+            pressure, dewpoint)
+        if not hasattr(height, 'size'):
+            return q.item()
+        return q
 
     def density(self, height):
         """Find the environmental density at a given height."""
@@ -193,8 +197,11 @@ class Environment:
         pressure = self.pressure(height)
         temperature = self.temperature(height)
         specific_humidity = self.specific_humidity(height)
-        return equivalent_potential_temperature(
+        theta_e = equivalent_potential_temperature(
             pressure, temperature, specific_humidity)
+        if not hasattr(height, 'size'):
+            return theta_e.item()
+        return theta_e
 
     def potential_temperature(self, height):
         """Find the environmental potential temperature at a given height."""
@@ -229,7 +236,10 @@ class Environment:
         """Find the environmental relative humidity at a given height."""
         temperature = self.temperature(height)
         dewpoint = self.dewpoint(height)
-        return mpcalc.relative_humidity_from_dewpoint(temperature, dewpoint)
+        rh = mpcalc.relative_humidity_from_dewpoint(temperature, dewpoint)
+        if not hasattr(height, 'size'):
+            return rh.item()
+        return rh
 
     def dcape_dcin(self, samples=10000):
         """
@@ -285,7 +295,7 @@ class Environment:
         dcin = simps(
             np.minimum(integrand(z_sample), 0), z_sample)*units.meter*const.g
 
-        return dcape, dcin
+        return dcape.item(), dcin.item()
 
 
 def idealised_sounding(relative_humidity, info='', name=''):
