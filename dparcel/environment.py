@@ -15,9 +15,10 @@ from metpy.units import units, concatenate
 import metpy.constants as const
 
 from scipy.interpolate import interp1d
-from scipy.integrate import solve_ivp
+from scipy.integrate import solve_ivp, simps
+from scipy.optimize import minimize_scalar
 
-from .thermo import equivalent_potential_temperature, wetbulb
+from .thermo import equivalent_potential_temperature, wetbulb, moist_lapse
 
 
 class Environment:
@@ -229,6 +230,62 @@ class Environment:
         temperature = self.temperature(height)
         dewpoint = self.dewpoint(height)
         return mpcalc.relative_humidity_from_dewpoint(temperature, dewpoint)
+
+    def dcape_dcin(self, samples=10000):
+        """
+        Compute DCAPE and DCIN according to Market et. al. (2017).
+
+        Args:
+            samples: Number of samples to use for integration (optional).
+
+        Returns:
+            DCAPE and DCIN for the sounding.
+
+        References:
+            Market, PS, Rochette, SM, Shewchuk, J, Difani, R, Kastman, JS,
+            Henson, CB & Fox, NI 2017, ‘Evaluating elevated convection
+            with the downdraft convective inhibition’, Atmospheric
+            science letters, vol. 18, no. 2, pp. 76–81.
+        """
+        # find minimum wet bulb temperature in lowest 6 km
+        def env_wetbulb(z):
+            return self.wetbulb_temperature(z*units.meter).m_as(units.kelvin)
+        sol = minimize_scalar(env_wetbulb, bounds=(0, 6000), method='bounded')
+        z_initial = sol.x
+        p_initial = self.pressure(z_initial*units.meter)
+        t_initial = sol.fun*units.kelvin
+
+        def integrand(z_final):
+            # find the virtual temperature after moist pseudoadiabatic
+            # descent to the final level
+            z_final = z_final*units.meter
+            p_final = self.pressure(z_final)
+            t_final = moist_lapse(
+                p_final, t_initial, p_initial, method='integration')
+            w_final = mpcalc.saturation_mixing_ratio(p_final, t_final)
+            tv_final = mpcalc.virtual_temperature(t_final, w_final)
+
+            # find the environmental virtual temperature at that level
+            t_env = self.temperature(z_final)
+            w_env = mpcalc.mixing_ratio_from_specific_humidity(
+                self.specific_humidity(z_final))
+            tv_env = mpcalc.virtual_temperature(t_env, w_env)
+
+            return 1 - tv_final.m_as(units.kelvin)/tv_env.m_as(units.kelvin)
+
+        # DCAPE: integrate from surface to level of minimum wet bulb
+        # temperature, taking positive area only.
+        # passing the integrand function to scipy.integrate.quad is very
+        # slow so we compute many samples and use Simpson's method.
+        z_sample = np.linspace(0, z_initial, samples)
+        dcape = simps(
+            np.maximum(integrand(z_sample), 0), z_sample)*units.meter*const.g
+        # DCIN: integrate from surface to level of minimum wet bulb
+        # temperature, taking negative area only
+        dcin = simps(
+            np.minimum(integrand(z_sample), 0), z_sample)*units.meter*const.g
+
+        return dcape, dcin
 
 
 def idealised_sounding(relative_humidity, info='', name=''):
