@@ -465,8 +465,8 @@ def test_dcape_dcin():
     ]
     for i, sounding in enumerate(soundings):
         actual_dcape, actual_dcin = sounding.dcape_dcin()
-        assert_almost_equal(actual_dcape, truth[i][0], 6)
-        assert_almost_equal(actual_dcin, truth[i][1], 6)
+        assert_almost_equal(actual_dcape, truth[i][0], 3)
+        assert_almost_equal(actual_dcin, truth[i][1], 3)
         assert not hasattr(actual_dcape, 'size')
         assert not hasattr(actual_dcin, 'size')
 
@@ -474,12 +474,12 @@ def test_idealised_sounding():
     """Test idealised_sounding."""
     actual_p, actual_z, actual_t, actual_td = idealised_sounding(0.5)
     assert_almost_equal(actual_p, p_rh50, 6)
-    assert_almost_equal(actual_z, z_rh50, 6)
+    assert_almost_equal(actual_z, z_rh50, 3)
     assert_almost_equal(actual_t, t_rh50, 6)
     assert_almost_equal(actual_td, td_rh50, 6)
 
     actual_p, actual_z, actual_t, actual_td = idealised_sounding(0.8)
     assert_almost_equal(actual_p, p_rh80, 6)
-    assert_almost_equal(actual_z, z_rh80, 6)
+    assert_almost_equal(actual_z, z_rh80, 3)
     assert_almost_equal(actual_t, t_rh80, 6)
     assert_almost_equal(actual_td, td_rh80, 6)

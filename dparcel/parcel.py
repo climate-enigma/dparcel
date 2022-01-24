@@ -94,7 +94,9 @@ class Parcel(Environment):
                 return t_initial, q_initial, l_initial
             if np.any(height > reference_height):
                 raise ValueError(
-                    'All final heights must be below reference_height.')
+                    'All final heights must be below reference_height. '
+                    'height = {} m, reference_height = {} m.'.format(
+                        height, reference_height))
 
         # create height array with correct spacing
         if reference_height is None or reference_height == height[0]:

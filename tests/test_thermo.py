@@ -471,9 +471,9 @@ def test_equilibrate_saturated_with_liquid():
     l_initial = 5e-3*units.dimensionless
     actual_t, actual_q, actual_l = equilibrate(
         pressure, t_initial, q_initial, l_initial)
-    assert actual_t == t_initial
-    assert actual_q == q_initial
-    assert actual_l == l_initial
+    assert_array_equal(actual_t, t_initial)
+    assert_array_equal(actual_q, q_initial)
+    assert_array_equal(actual_l, l_initial)
     assert not hasattr(actual_t, 'size')
     assert not hasattr(actual_q, 'size')
     assert not hasattr(actual_l, 'size')
