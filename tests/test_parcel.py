@@ -10,7 +10,7 @@ from metpy.units import units
 
 from dparcel.parcel import Parcel, FastParcel
 
-data = pd.read_csv('test_soundings/sydney_20210716_00Z.csv', header=0)
+data = pd.read_csv('tests/test_soundings/sydney_20210716_00Z.csv', header=0)
 p_sydney, z_sydney, t_sydney, td_sydney = data.to_numpy().T
 p_sydney *= units.mbar
 z_sydney *= units.meter

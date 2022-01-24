@@ -9,7 +9,7 @@ from metpy.units import units
 
 from dparcel.environment import Environment, idealised_sounding
 
-data = pd.read_csv('test_soundings/sydney_20210716_00Z.csv', header=0)
+data = pd.read_csv('tests/test_soundings/sydney_20210716_00Z.csv', header=0)
 p_sydney, z_sydney, t_sydney, td_sydney = data.to_numpy().T
 p_sydney *= units.mbar
 z_sydney *= units.meter
@@ -17,7 +17,7 @@ t_sydney *= units.kelvin
 td_sydney *= units.kelvin
 sydney = Environment(p_sydney, z_sydney, t_sydney, td_sydney)
 
-data = pd.read_csv('test_soundings/idealised_rh50.csv', header=0)
+data = pd.read_csv('tests/test_soundings/idealised_rh50.csv', header=0)
 p_rh50, z_rh50, t_rh50, td_rh50 = data.to_numpy().T
 p_rh50 *= units.mbar
 z_rh50 *= units.meter
@@ -25,7 +25,7 @@ t_rh50 *= units.kelvin
 td_rh50 *= units.kelvin
 idealised_rh50 = Environment(p_rh50, z_rh50, t_rh50, td_rh50)
 
-data = pd.read_csv('test_soundings/idealised_rh80.csv', header=0)
+data = pd.read_csv('tests/test_soundings/idealised_rh80.csv', header=0)
 p_rh80, z_rh80, t_rh80, td_rh80 = data.to_numpy().T
 p_rh80 *= units.mbar
 z_rh80 *= units.meter
