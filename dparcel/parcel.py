@@ -83,11 +83,18 @@ class Parcel(Environment):
         """
         height = np.atleast_1d(height).m_as(units.meter)
         step = step.m_as(units.meter)
+
+        if height.size > 1 and np.any(height[:-1] <= height[1:]):
+            raise ValueError(
+                'Height array must be monotonically decreasing.')
         if reference_height is not None:
             reference_height = reference_height.m_as(units.meter)
-            if height.size == 1 and height.item() >= reference_height:
+            if height.size == 1 and height.item() == reference_height:
                 # no descent needed, return initial values
                 return t_initial, q_initial, l_initial
+            if np.any(height > reference_height):
+                raise ValueError(
+                    'All final heights must be below reference_height.')
 
         # create height array with correct spacing
         if reference_height is None or reference_height == height[0]:
@@ -106,7 +113,7 @@ class Parcel(Environment):
             sol_states.append(next_state)
 
         if height.size == 1:
-            return sol_states[-1]
+            return tuple([var.item() for var in sol_states[-1]])
 
         t_sol = concatenate(
             [state[0] for state in sol_states]).m_as(units.celsius)
