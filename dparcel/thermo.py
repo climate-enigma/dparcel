@@ -51,15 +51,15 @@ def moist_lapse(
         # TODO: remove this once moist_lapse bug is fixed in next
         # MetPy release
         if pressure.size == 1:
-            try:
-                temperature = mpcalc.moist_lapse(
-                    pressure, initial_temperature,
-                    reference_pressure=reference_pressure)
-                return np.atleast_1d(temperature)[0]
-            except:
-                return mpcalc.moist_lapse(
-                    pressure.item(), initial_temperature.item(),
-                    reference_pressure=reference_pressure.item())
+            temperature = mpcalc.moist_lapse(
+                pressure, initial_temperature,
+                reference_pressure=reference_pressure)
+            if temperature.size != 1:
+                # mpcalc.moist_lapes has a bug where it will return an
+                # array of length 2 if pressure and reference_pressure
+                # are very close
+                return temperature[0]
+            return temperature.item()
         else:
             if reference_pressure == pressure[0]:
                 pressure = pressure[1:]
@@ -102,8 +102,11 @@ def temperature_change(delta_q):
 
 def saturation_specific_humidity(pressure, temperature):
     """Calculate saturation specific humidity."""
-    return mpcalc.specific_humidity_from_mixing_ratio(
+    q_star = mpcalc.specific_humidity_from_mixing_ratio(
         mpcalc.saturation_mixing_ratio(pressure, temperature))
+    if not hasattr(pressure, 'size') and not hasattr(temperature, 'size'):
+        return q_star.item()
+    return q_star
 
 
 def equivalent_potential_temperature(p, Tk, q, prime=False):
@@ -157,6 +160,9 @@ def equivalent_potential_temperature(p, Tk, q, prime=False):
     thetae = thetadl*np.exp((3036*units.kelvin/Tl - 1.78)*r*(1 + 0.448*r))
 
     if prime is False:
+        if not (hasattr(p, 'size') or hasattr(Tk, 'size')
+                or hasattr(q, 'size')):
+            return thetae.item()
         return thetae
 
     # derivative of sat. vapour pressure w.r.t. temperature
@@ -175,6 +181,9 @@ def equivalent_potential_temperature(p, Tk, q, prime=False):
     dlogthetae_dTk = (dlogthetadl_dTk
                       - 3036*units.kelvin/Tl**2 * r*(1 + 0.448*r)*dTl_dTk)
 
+    if not (hasattr(p, 'size') or hasattr(Tk, 'size')
+            or hasattr(q, 'size')):
+        return thetae.item(), (thetae*dlogthetae_dTk).item()
     return thetae, thetae*dlogthetae_dTk
 
 
@@ -222,6 +231,8 @@ def saturation_equivalent_potential_temperature(p, Tk, prime=False):
     thetae = thetadl*np.exp((3036*units.kelvin/Tk - 1.78)*rs*(1 + 0.448*rs))
 
     if prime is False:
+        if not (hasattr(p, 'size') or hasattr(Tk, 'size')):
+            return thetae.item()
         return thetae
 
     # derivative of sat. vapour pressure w.r.t. temperature
@@ -237,6 +248,8 @@ def saturation_equivalent_potential_temperature(p, Tk, prime=False):
         + (3036*units.kelvin/Tk - 1.78)*drs_dTk*(1 + 2*0.448*rs)
     )
 
+    if not (hasattr(p, 'size') or hasattr(Tk, 'size')):
+        return thetae.item(), (thetae*dlogthetae_dTk).item()
     return thetae, thetae*dlogthetae_dTk
 
 
@@ -292,6 +305,9 @@ def lcl_romps(p, T, q):
     T_lcl = bL/(aL*lambertw(bL/aL*cL**(1/aL), -1).real)*T
     p_lcl = p*(T_lcl/T)**(cpm/rgasm)
 
+    if not (hasattr(p, 'size') or hasattr(T, 'size')
+            or hasattr(q, 'size')):
+        return (p_lcl/1e2*units.mbar).item(), (T_lcl*units.kelvin).item()
     return p_lcl/1e2*units.mbar, T_lcl*units.kelvin
 
 
@@ -360,6 +376,8 @@ def wetbulb_potential_temperature(theta_e):
         * (theta_e >= 173.15)
     )
 
+    if not hasattr(theta_e, 'size'):
+        return (theta_w*units.celsius).item()
     return theta_w*units.celsius
 
 
@@ -852,7 +870,7 @@ def equilibrate(pressure, t_initial, q_initial, l_initial):
     if ((q_initial <= q_sat_initial and l_initial <= 0)
             or q_initial == q_sat_initial):
         # parcel is already in equilibrium
-        return t_initial, q_initial, np.maximum(l_initial, 0)
+        return t_initial, q_initial, np.maximum(l_initial, 0).item()
 
     # to find the initial temperature after evaporation,first assume
     # that the parcel becomes saturated and therefore attains its
@@ -882,4 +900,4 @@ def equilibrate(pressure, t_initial, q_initial, l_initial):
                 pressure, t_final, q_final, prime=True)
             t_final -= (value - theta_e)/slope
 
-    return t_final, q_final, l_final
+    return t_final.item(), q_final.item(), l_final.item()

@@ -141,7 +141,7 @@ def test_height():
     ]
     for i, sounding in enumerate(soundings):
         actual = sounding.height(p_orig[i])
-        assert_almost_equal(actual, z_orig[i], 6)
+        assert_almost_equal(actual, z_orig[i] - np.min(z_orig[i]), 6)
         actual = sounding.height(p_test)
         assert_almost_equal(actual, truth[i], 6)
 

@@ -199,8 +199,6 @@ class Environment:
         specific_humidity = self.specific_humidity(height)
         theta_e = equivalent_potential_temperature(
             pressure, temperature, specific_humidity)
-        if not hasattr(height, 'size'):
-            return theta_e.item()
         return theta_e
 
     def potential_temperature(self, height):

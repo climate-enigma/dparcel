@@ -28,6 +28,7 @@ def test_moist_lapse_scalar():
     actual = moist_lapse(1000*units.mbar, 0*units.celsius, 900*units.mbar)
     truth = 5.140677691654389*units.celsius
     assert_almost_equal(actual, truth, 3)
+    assert not hasattr(actual, 'size')
 
 def test_moist_lapse_up():
     """Test moist_lapse for a decreasing pressure array."""
@@ -89,12 +90,26 @@ def test_temperature_change():
     ]*units.delta_degC
     assert_almost_equal(actual, truth, 3)
 
+def test_temperature_change_scalar():
+    """Test temperature_change for scalar input."""
+    actual = temperature_change(1e-3*units.dimensionless)
+    truth = -2.4892247336957456*units.delta_degC
+    assert_almost_equal(actual, truth, 3)
+    assert not hasattr(actual, 'size')
+
 def test_saturation_specific_humidity():
     """Test saturation_specific_humdiity."""
     actual = saturation_specific_humidity(
         [1000, 500]*units.mbar, [20, -20]*units.celsius)
     truth = [0.01466435884730134, 0.001565585489192481]*units.dimensionless
     assert_almost_equal(actual, truth, 6)
+
+def test_saturation_specific_humidity_scalar():
+    """Test saturation_specific_humdiity for scalar input."""
+    actual = saturation_specific_humidity(1000*units.mbar, 20*units.celsius)
+    truth = 0.01466435884730134*units.dimensionless
+    assert_almost_equal(actual, truth, 6)
+    assert not hasattr(actual, 'size')
 
 def test_equivalent_potential_temperature():
     """Test the Bolton theta-e calculation."""
@@ -103,6 +118,14 @@ def test_equivalent_potential_temperature():
         [2e-3, 1e-3]*units.dimensionless)
     truth = [286.32296194967887, 283.3410452993932]*units.kelvin
     assert_almost_equal(actual, truth, 3)
+
+def test_equivalent_potential_temperature_scalar():
+    """Test the Bolton theta-e calculation for scalar input."""
+    actual = equivalent_potential_temperature(
+        800*units.mbar, -10*units.celsius, 2e-3*units.dimensionless)
+    truth = 286.32296194967887*units.kelvin
+    assert_almost_equal(actual, truth, 3)
+    assert not hasattr(actual, 'size')
 
 def test_equivalent_potential_temperature_prime():
     """Test the Bolton theta-e calculation and its derivative."""
@@ -114,12 +137,32 @@ def test_equivalent_potential_temperature_prime():
     assert_almost_equal(actual, truth, 3)
     assert_almost_equal(actual_prime, truth_prime, 6)
 
+def test_equivalent_potential_temperature_prime_scalar():
+    """Test the Bolton theta-e calculation and its derivative, scalar input."""
+    actual, actual_prime = equivalent_potential_temperature(
+        800*units.mbar, -10*units.celsius, 2e-3*units.dimensionless,
+        prime=True)
+    truth = 286.32296194967887*units.kelvin
+    truth_prime = 1.062969006161107*units.dimensionless
+    assert_almost_equal(actual, truth, 3)
+    assert_almost_equal(actual_prime, truth_prime, 6)
+    assert not hasattr(actual, 'size')
+    assert not hasattr(actual_prime, 'size')
+
 def test_saturation_equivalent_potential_temperature():
     """Test the Bolton saturation theta-e calculation."""
     actual = saturation_equivalent_potential_temperature(
         [800, 700]*units.mbar, [-10, -20]*units.celsius)
     truth = [286.96464624491335, 283.6778433487204]*units.kelvin
     assert_almost_equal(actual, truth, 3)
+
+def test_saturation_equivalent_potential_temperature_scalar():
+    """Test the Bolton saturation theta-e calculation for scalar input."""
+    actual = saturation_equivalent_potential_temperature(
+        800*units.mbar, -10*units.celsius)
+    truth = 286.96464624491335*units.kelvin
+    assert_almost_equal(actual, truth, 3)
+    assert not hasattr(actual, 'size')
 
 def test_saturation_equivalent_potential_temperature_prime():
     """Test the Bolton saturation theta-e calculation and its derivative."""
@@ -129,6 +172,17 @@ def test_saturation_equivalent_potential_temperature_prime():
     truth_prime = [1.5827669621042701, 1.3981892491580596]*units.dimensionless
     assert_almost_equal(actual, truth, 3)
     assert_almost_equal(actual_prime, truth_prime, 6)
+
+def test_saturation_equivalent_potential_temperature_prime_scalar():
+    """Test the Bolton saturation theta-e calculation and its derivative."""
+    actual, actual_prime = saturation_equivalent_potential_temperature(
+        800*units.mbar, -10*units.celsius, prime=True)
+    truth = 286.96464624491335*units.kelvin
+    truth_prime = 1.5827669621042701*units.dimensionless
+    assert_almost_equal(actual, truth, 3)
+    assert_almost_equal(actual_prime, truth_prime, 6)
+    assert not hasattr(actual, 'size')
+    assert not hasattr(actual_prime, 'size')
 
 def test_lcl_romps():
     """Test the Romps LCL calculation."""
@@ -140,12 +194,24 @@ def test_lcl_romps():
     assert_almost_equal(actual_p, truth_p, 3)
     assert_almost_equal(actual_t, truth_t, 3)
 
+def test_lcl_romps_scalar():
+    """Test the Romps LCL calculation for scalar input."""
+    actual_p, actual_t = lcl_romps(
+        800*units.mbar, -10*units.celsius, 2e-3*units.dimensionless)
+    truth_p = 782.3940262594958*units.mbar
+    truth_t = 261.4853622159218*units.kelvin
+    assert_almost_equal(actual_p, truth_p, 3)
+    assert_almost_equal(actual_t, truth_t, 3)
+    assert not hasattr(actual_p, 'size')
+    assert not hasattr(actual_t, 'size')
+
 def test_wetbulb_romps():
     """Test the Romps/Normand wet bulb temperature calculation."""
     actual = wetbulb_romps(
         800*units.mbar, -10*units.celsius, 1e-3*units.dimensionless)
     truth = 260.9764484774397*units.kelvin
     assert_almost_equal(actual, truth, 6)
+    assert not hasattr(actual, 'size')
 
 def test_wetbulb_potential_temperature():
     """Test the Davies-Jones theta-w calculation."""
@@ -154,6 +220,13 @@ def test_wetbulb_potential_temperature():
         8.107715823233654, 15.519649959977588, 21.107019431217317,
     ]*units.celsius
     assert_almost_equal(actual, truth, 3)
+
+def test_wetbulb_potential_temperature_scalar():
+    """Test the Davies-Jones theta-w calculation for scalar input."""
+    actual = wetbulb_potential_temperature(300*units.kelvin)
+    truth = 8.107715823233654*units.celsius
+    assert_almost_equal(actual, truth, 3)
+    assert not hasattr(actual, 'size')
 
 def test_wetbulb():
     """Test the Davies-Jones wet bulb temperature calculation."""
@@ -171,6 +244,15 @@ def test_wetbulb():
     assert_almost_equal(actual, truth, 3)
     assert_array_equal(actual, actual1)
     assert_array_equal(actual, actual_true)
+
+def test_wetbulb_scalar():
+    """Test the Davies-Jones wet bulb temperature calculation, scalar input."""
+    pressure = 1000*units.mbar
+    theta_e = 363.0*units.kelvin
+    actual = wetbulb(pressure, theta_e)
+    truth = 26.06076033323872*units.celsius
+    assert_almost_equal(actual, truth, 3)
+    assert not hasattr(actual, 'size')
 
 def test_wetbulb_improve_off():
     """Test the Davies-Jones first guess for wet bulb temperature."""
@@ -194,6 +276,7 @@ def test_reversible_lapse_daviesjones_scalar():
         reference_pressure=500*units.mbar)
     truth = 13.338636681996844*units.celsius
     assert_almost_equal(actual, truth, 3)
+    assert not hasattr(actual, 'size')
 
 def test_reversible_lapse_daviesjones_up():
     """Test the D-J reversible adiabat calculation for decreasing pressures."""
@@ -228,6 +311,7 @@ def test_reversible_lapse_saunders_scalar():
         reference_pressure=500*units.mbar)
     truth = 13.338717604035764*units.celsius
     assert_almost_equal(actual, truth, 3)
+    assert not hasattr(actual, 'size')
 
 def test_reversible_lapse_saunders_up():
     """Test Saunders reversible adiabat calc. for decreasing pressures."""
@@ -266,6 +350,10 @@ def test_descend_dry():
     assert_almost_equal(actual_t, truth_t, 3)
     assert actual_q == truth_q
     assert actual_l == truth_l
+    assert not hasattr(actual_t, 'size')
+    assert not hasattr(actual_q, 'size')
+    assert not hasattr(actual_l, 'size')
+
 
 def test_descent_moist_pseudoadiabatic():
     """Test descend for moist pseudoadiabatic descent."""
@@ -279,6 +367,9 @@ def test_descent_moist_pseudoadiabatic():
     assert_almost_equal(actual_t, truth_t, 3)
     assert_almost_equal(actual_q, truth_q, 6)
     assert_almost_equal(actual_l, truth_l, 6)
+    assert not hasattr(actual_t, 'size')
+    assert not hasattr(actual_q, 'size')
+    assert not hasattr(actual_l, 'size')
 
 def test_descent_moist_reversible():
     """Test descend for moist reversible adiabatic descent."""
@@ -292,6 +383,9 @@ def test_descent_moist_reversible():
     assert_almost_equal(actual_t, truth_t, 3)
     assert_almost_equal(actual_q, truth_q, 6)
     assert_almost_equal(actual_l, truth_l, 6)
+    assert not hasattr(actual_t, 'size')
+    assert not hasattr(actual_q, 'size')
+    assert not hasattr(actual_l, 'size')
 
 def test_descent_mixed_pseudoadiabatic():
     """Test descend for mixed moist pseudoadiabatic and dry descent."""
@@ -305,6 +399,9 @@ def test_descent_mixed_pseudoadiabatic():
     assert_almost_equal(actual_t, truth_t, 3)
     assert actual_q == truth_q
     assert actual_l == truth_l
+    assert not hasattr(actual_t, 'size')
+    assert not hasattr(actual_q, 'size')
+    assert not hasattr(actual_l, 'size')
 
 def test_descent_mixed_reversible():
     """Test descend for mixed moist reversible adiabatic and dry descent."""
@@ -318,6 +415,9 @@ def test_descent_mixed_reversible():
     assert_almost_equal(actual_t, truth_t, 3)
     assert actual_q == truth_q
     assert actual_l == truth_l
+    assert not hasattr(actual_t, 'size')
+    assert not hasattr(actual_q, 'size')
+    assert not hasattr(actual_l, 'size')
 
 def test_descend_invalid_method():
     """Check that descend raises an error for invalid methods."""
@@ -337,6 +437,17 @@ def test_mix():
     truth = [275.0, 280.0, 289.0]*units.kelvin
     assert_array_equal(actual, truth)
 
+def test_mix_scalar():
+    """Test the mixing calculation for scalar input."""
+    parcel = 270*units.kelvin
+    environment = 280*units.kelvin
+    rate = 0.5*(1/units.km)
+    dz = 1*units.km
+    actual = mix(parcel, environment, rate, dz)
+    truth = 275.0*units.kelvin
+    assert_array_equal(actual, truth)
+    assert not hasattr(actual, 'size')
+
 def test_equilibrate_subsaturated_no_liquid():
     """Test phase equlibration for a subsaturated parcel in equilibrium."""
     pressure = 1000*units.mbar
@@ -348,6 +459,9 @@ def test_equilibrate_subsaturated_no_liquid():
     assert actual_t == t_initial
     assert actual_q == q_initial
     assert actual_l == l_initial
+    assert not hasattr(actual_t, 'size')
+    assert not hasattr(actual_q, 'size')
+    assert not hasattr(actual_l, 'size')
 
 def test_equilibrate_saturated_with_liquid():
     """Test phase equlibration for a saturated parcel in equilibrium."""
@@ -360,6 +474,9 @@ def test_equilibrate_saturated_with_liquid():
     assert actual_t == t_initial
     assert actual_q == q_initial
     assert actual_l == l_initial
+    assert not hasattr(actual_t, 'size')
+    assert not hasattr(actual_q, 'size')
+    assert not hasattr(actual_l, 'size')
 
 def test_equilibrate_subsaturated_with_high_liquid():
     """Test phase equilibration for a subsaturated parcel with high LWC."""
@@ -375,6 +492,9 @@ def test_equilibrate_subsaturated_with_high_liquid():
     assert_almost_equal(actual_t, truth_t, 3)
     assert_almost_equal(actual_q, truth_q, 6)
     assert_almost_equal(actual_l, truth_l, 6)
+    assert not hasattr(actual_t, 'size')
+    assert not hasattr(actual_q, 'size')
+    assert not hasattr(actual_l, 'size')
 
 def test_equilibrate_subsaturated_with_low_liquid():
     """Test phase equilibration for a subsaturated parcel with low LWC."""
@@ -388,6 +508,9 @@ def test_equilibrate_subsaturated_with_low_liquid():
     assert_almost_equal(actual_t, truth_t, 3)
     assert actual_q == 4e-3*units.dimensionless
     assert actual_l == 0*units.dimensionless
+    assert not hasattr(actual_t, 'size')
+    assert not hasattr(actual_q, 'size')
+    assert not hasattr(actual_l, 'size')
 
 def test_equilibrate_supersaturated_no_liquid():
     """Test phase equilibration for a supersaturated parcel with no liquid."""
@@ -403,6 +526,9 @@ def test_equilibrate_supersaturated_no_liquid():
     assert_almost_equal(actual_t, truth_t, 3)
     assert_almost_equal(actual_q, truth_q, 6)
     assert_almost_equal(actual_l, truth_l, 6)
+    assert not hasattr(actual_t, 'size')
+    assert not hasattr(actual_q, 'size')
+    assert not hasattr(actual_l, 'size')
 
 def test_equilibrate_supersaturated_with_liquid():
     """Test phase equilibration for a supersaturated parcel with liquid."""
@@ -418,3 +544,6 @@ def test_equilibrate_supersaturated_with_liquid():
     assert_almost_equal(actual_t, truth_t, 3)
     assert_almost_equal(actual_q, truth_q, 6)
     assert_almost_equal(actual_l, truth_l, 6)
+    assert not hasattr(actual_t, 'size')
+    assert not hasattr(actual_q, 'size')
+    assert not hasattr(actual_l, 'size')
