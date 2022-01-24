@@ -325,7 +325,7 @@ def test_parcel_motion_hit_ground():
     actual = sydney.motion(
         time, z_init, w_init, t_initial, q_initial, l_initial, rate)
 
-    for actual_var, truth_var in zip(truth.values(), actual.__dict__.values()):
+    for truth_var, actual_var in zip(truth.values(), actual.__dict__.values()):
         assert_almost_equal(actual_var, truth_var, 4)
 
 def test_parcel_motion_not_hit_ground():
@@ -364,7 +364,7 @@ def test_parcel_motion_not_hit_ground():
     actual = sydney.motion(
         time, z_init, w_init, t_initial, q_initial, l_initial, rate)
 
-    for actual_var, truth_var in zip(truth.values(), actual.__dict__.values()):
+    for truth_var, actual_var in zip(truth.values(), actual.__dict__.values()):
         assert_almost_equal(actual_var, truth_var, 4)
 
 def test_fastparcel_parcel_equivalent_potential_temperature():
@@ -815,7 +815,7 @@ def test_fastparcel_motion_hit_ground():
     actual = sydneyfast.motion(
         time, z_init, w_init, t_initial, q_initial, l_initial, rate)
 
-    for actual_var, truth_var in zip(truth.values(), actual.__dict__.values()):
+    for truth_var, actual_var in zip(truth.values(), actual.__dict__.values()):
         assert_almost_equal(actual_var, truth_var, 4)
 
 def test_fastparcel_motion_not_hit_ground():
@@ -854,5 +854,5 @@ def test_fastparcel_motion_not_hit_ground():
     actual = sydneyfast.motion(
         time, z_init, w_init, t_initial, q_initial, l_initial, rate)
 
-    for actual_var, truth_var in zip(truth.values(), actual.__dict__.values()):
+    for truth_var, actual_var in zip(truth.values(), actual.__dict__.values()):
         assert_almost_equal(actual_var, truth_var, 4)
