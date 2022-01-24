@@ -348,8 +348,8 @@ def test_descend_dry():
     truth_q = 1e-3*units.dimensionless
     truth_l = 0*units.dimensionless
     assert_almost_equal(actual_t, truth_t, 3)
-    assert actual_q == truth_q
-    assert actual_l == truth_l
+    assert_almost_equal(actual_q, truth_q)
+    assert_almost_equal(actual_l, truth_l)
     assert not hasattr(actual_t, 'size')
     assert not hasattr(actual_q, 'size')
     assert not hasattr(actual_l, 'size')
@@ -397,8 +397,8 @@ def test_descent_mixed_pseudoadiabatic():
     truth_q = 0.005565585489192481*units.dimensionless
     truth_l = 0*units.dimensionless
     assert_almost_equal(actual_t, truth_t, 3)
-    assert actual_q == truth_q
-    assert actual_l == truth_l
+    assert_almost_equal(actual_q, truth_q)
+    assert_almost_equal(actual_l, truth_l)
     assert not hasattr(actual_t, 'size')
     assert not hasattr(actual_q, 'size')
     assert not hasattr(actual_l, 'size')
@@ -413,8 +413,8 @@ def test_descent_mixed_reversible():
     truth_q = 0.005565585489192481*units.dimensionless
     truth_l = 0*units.dimensionless
     assert_almost_equal(actual_t, truth_t, 3)
-    assert actual_q == truth_q
-    assert actual_l == truth_l
+    assert_almost_equal(actual_q, truth_q)
+    assert_almost_equal(actual_l, truth_l)
     assert not hasattr(actual_t, 'size')
     assert not hasattr(actual_q, 'size')
     assert not hasattr(actual_l, 'size')
@@ -456,9 +456,9 @@ def test_equilibrate_subsaturated_no_liquid():
     l_initial = 0*units.dimensionless
     actual_t, actual_q, actual_l = equilibrate(
         pressure, t_initial, q_initial, l_initial)
-    assert actual_t == t_initial
-    assert actual_q == q_initial
-    assert actual_l == l_initial
+    assert_almost_equal(actual_t, t_initial)
+    assert_almost_equal(actual_q, q_initial)
+    assert_almost_equal(actual_l, l_initial)
     assert not hasattr(actual_t, 'size')
     assert not hasattr(actual_q, 'size')
     assert not hasattr(actual_l, 'size')
@@ -471,9 +471,9 @@ def test_equilibrate_saturated_with_liquid():
     l_initial = 5e-3*units.dimensionless
     actual_t, actual_q, actual_l = equilibrate(
         pressure, t_initial, q_initial, l_initial)
-    assert_array_equal(actual_t, t_initial)
-    assert_array_equal(actual_q, q_initial)
-    assert_array_equal(actual_l, l_initial)
+    assert_almost_equal(actual_t, t_initial)
+    assert_almost_equal(actual_q, q_initial)
+    assert_almost_equal(actual_l, l_initial)
     assert not hasattr(actual_t, 'size')
     assert not hasattr(actual_q, 'size')
     assert not hasattr(actual_l, 'size')
@@ -506,8 +506,8 @@ def test_equilibrate_subsaturated_with_low_liquid():
         pressure, t_initial, q_initial, l_initial)
     truth_t = 280.5424120530777*units.kelvin
     assert_almost_equal(actual_t, truth_t, 3)
-    assert actual_q == 4e-3*units.dimensionless
-    assert actual_l == 0*units.dimensionless
+    assert_almost_equal(actual_q, 4e-3*units.dimensionless)
+    assert_almost_equal(actual_l, 0*units.dimensionless)
     assert not hasattr(actual_t, 'size')
     assert not hasattr(actual_q, 'size')
     assert not hasattr(actual_l, 'size')

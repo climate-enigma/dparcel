@@ -270,6 +270,11 @@ class Parcel(Environment):
                 sample_heights.size - 1
                 - np.searchsorted(np.flip(sample_heights), height))
 
+            # solve_ivp may test height > initial_height
+            if closest_index == -1:
+                height = sample_heights[0]
+                closest_index = 0
+
             # start from the pre-computed values and integrate the small
             # remaining distance to the desired level to find the buoyancy
             buoyancy = self.buoyancy(

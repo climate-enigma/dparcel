@@ -559,8 +559,8 @@ def test_fastparcel_transition_point_dry():
 
     actual_z, actual_t = sydneyfast._transition_point(
         z_init, t_initial, l_initial, theta_e, total_water)
-    assert actual_z == z_init
-    assert actual_t == t_initial
+    assert_almost_equal(actual_z, z_init)
+    assert_almost_equal(actual_t, t_initial)
     assert not hasattr(actual_z, 'size')
     assert not hasattr(actual_t, 'size')
 
@@ -601,7 +601,7 @@ def test_fastparcel_transition_point_moist():
         z_init, t_initial, l_initial, theta_e, total_water)
     truth_z = 0*units.meter
     truth_t = 285.41367938613286*units.kelvin
-    assert actual_z == truth_z
+    assert_almost_equal(actual_z, truth_z)
     assert_almost_equal(actual_t, truth_t, 3)
     assert not hasattr(actual_z, 'size')
     assert not hasattr(actual_t, 'size')
