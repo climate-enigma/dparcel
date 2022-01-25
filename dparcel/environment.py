@@ -18,7 +18,7 @@ from scipy.interpolate import interp1d
 from scipy.integrate import solve_ivp, simps
 from scipy.optimize import minimize_scalar
 
-from .thermo import equivalent_potential_temperature, wetbulb, moist_lapse
+from .thermo import equivalent_potential_temperature, wetbulb
 
 
 class Environment:
@@ -268,8 +268,7 @@ class Environment:
             # descent to the final level
             z_final = z_final*units.meter
             p_final = self.pressure(z_final)
-            t_final = moist_lapse(
-                p_final, t_initial, p_initial, method='integration')
+            t_final = mpcalc.moist_lapse(p_final, t_initial, p_initial)
             w_final = mpcalc.saturation_mixing_ratio(p_final, t_final)
             tv_final = mpcalc.virtual_temperature(t_final, w_final)
 
@@ -296,7 +295,7 @@ class Environment:
         return dcape.item(), dcin.item()
 
 
-def idealised_sounding(relative_humidity, info='', name=''):
+def idealised_sounding(relative_humidity):
     """
     Create an idealised sounding.
 
@@ -312,9 +311,6 @@ def idealised_sounding(relative_humidity, info='', name=''):
 
     Args:
         relative_humidity: Relative humidity above the boundary layer.
-        info: Information to store with the sounding, e.g. date
-            (optional)
-        name: Short name for the sounding, e.g. 'Sydney' (optional).
 
     Returns:
         Arrays of pressure, height, temperature and specific humidity

@@ -652,9 +652,6 @@ def test_fastparcel_properties_all_moist():
         z_init, t_initial, l_initial, theta_e, total_water)
     actual_t, actual_q, actual_l = sydneyfast.properties(
         height, z_init, t_initial, z_switch, t_switch, theta_e, total_water)
-    (actual_t_moist, actual_q_moist,
-     actual_l_moist) = sydneyfast._properties_moist(
-        height, z_init, t_initial, theta_e, total_water)
     truth_t = [283.6021255, 284.50188453, 284.26175698]*units.kelvin
     truth_q = [0.00829667, 0.00860362, 0.00939808]*units.dimensionless
     truth_l = [0.00167194, 0.00105108, 0.]*units.dimensionless
