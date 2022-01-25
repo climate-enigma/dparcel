@@ -8,7 +8,8 @@ def readme():
     with open('README.rst') as f:
         return f.read()
 
-setup(name='dparcel',
+setup(
+    name='dparcel',
     version='0.1',
     description=('A simple parcel theory model of downdrafts '
                  'in atmospheric convection.'),
@@ -20,7 +21,7 @@ setup(name='dparcel',
     packages=['dparcel'],
     install_requires=[
         'numpy',
-        'metpy',
+        'metpy>=1.2',
         'scipy',
     ],
     classifiers=[
@@ -32,5 +33,12 @@ setup(name='dparcel',
         'Topic :: Scientific/Engineering :: Atmospheric Science',
     ],
     keywords='parcel downdraft atmosphere convection model',
-    include_package_data=True
+    include_package_data=True,
+    zip_safe=False,
+    project_urls={
+        'Documentation': 'https://dparcel.readthedocs.io/',
+        'Source Code': 'https://github.com/tschanzer/dparcel',
+        'Bug Tracker': 'https://github.com/tschanzer/dparcel/issues',
+        'Release Notes': 'https://github.com/tschanzer/dparcel/releases',
+    }
 )
