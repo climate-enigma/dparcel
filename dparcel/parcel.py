@@ -83,11 +83,20 @@ class Parcel(Environment):
         """
         height = np.atleast_1d(height).m_as(units.meter)
         step = step.m_as(units.meter)
+
+        if height.size > 1 and np.any(height[:-1] <= height[1:]):
+            raise ValueError(
+                'Height array must be monotonically decreasing.')
         if reference_height is not None:
             reference_height = reference_height.m_as(units.meter)
-            if height.size == 1 and height.item() >= reference_height:
+            if height.size == 1 and height.item() == reference_height:
                 # no descent needed, return initial values
                 return t_initial, q_initial, l_initial
+            if np.any(height > reference_height):
+                raise ValueError(
+                    'All final heights must be below reference_height. '
+                    'height = {} m, reference_height = {} m.'.format(
+                        height, reference_height))
 
         # create height array with correct spacing
         if reference_height is None or reference_height == height[0]:
@@ -106,7 +115,7 @@ class Parcel(Environment):
             sol_states.append(next_state)
 
         if height.size == 1:
-            return sol_states[-1]
+            return tuple([var.item() for var in sol_states[-1]])
 
         t_sol = concatenate(
             [state[0] for state in sol_states]).m_as(units.celsius)
@@ -260,6 +269,11 @@ class Parcel(Environment):
             closest_index = (
                 sample_heights.size - 1
                 - np.searchsorted(np.flip(sample_heights), height))
+
+            # solve_ivp may test height > initial_height
+            if closest_index == -1:
+                height = sample_heights[0]
+                closest_index = 0
 
             # start from the pre-computed values and integrate the small
             # remaining distance to the desired level to find the buoyancy
@@ -510,7 +524,7 @@ class FastParcel(Environment):
 
         return water
 
-    def properties_moist(
+    def _properties_moist(
             self, height, initial_height, initial_temperature,
             theta_e, total_water, improve=5):
         """
@@ -552,7 +566,7 @@ class FastParcel(Environment):
 
         return temperature, specific_humidity, liquid_ratio
 
-    def properties_dry(
+    def _properties_dry(
             self, height, initial_height, initial_temperature,
             theta_e, total_water, improve=5):
         """
@@ -597,7 +611,7 @@ class FastParcel(Environment):
 
         return temperature, q_sol, liquid_ratio
 
-    def transition_point(
+    def _transition_point(
             self, initial_height, initial_temperature, initial_liquid_ratio,
             theta_e, total_water, improve=5):
         """
@@ -625,18 +639,15 @@ class FastParcel(Environment):
             initial_height.m_as(units.meter), 0, -100
         )*units.meter
         height = concatenate([height, 0*units.meter])
-        t_moist, _, l_moist = self.properties_moist(
+        t_moist, _, l_moist = self._properties_moist(
             height, initial_height, initial_temperature,
             theta_e, total_water, improve)
 
         if l_moist[-1] > 0:
             # moist descent only
-            return 0*units.meter, t_moist[-1]
+            return 0*units.meter, t_moist[-1].item()
 
         # now find the transition point where l == 0
-        if np.any(l_moist == 0):
-            # check if we have already found the transition point
-            return height[l_moist == 0][0], t_moist[l_moist == 0][0]
 
         # choose a suitable bracketing interval for the transition point.
         # out of the heights that give positive l_moist, use the one
@@ -655,7 +666,7 @@ class FastParcel(Environment):
         # l_moist == 0
         height = np.linspace(
             guess_above.m_as(units.meter), guess_below.m_as(units.meter), 100)
-        t_moist, _, l_moist = self.properties_moist(
+        t_moist, _, l_moist = self._properties_moist(
             height*units.meter, initial_height, initial_temperature,
             theta_e, total_water, improve)
         z_switch = interp1d(l_moist.m, height)(0)
@@ -691,19 +702,19 @@ class FastParcel(Environment):
         q_final = np.zeros(height.size)*units.dimensionless
         l_final = np.zeros(height.size)*units.dimensionless
 
-        if np.any(height >= z_switch):
-            (t_final[height >= z_switch],
-             q_final[height >= z_switch],
-             l_final[height >= z_switch]) = self.properties_moist(
-                height[height >= z_switch],
+        if np.any(height > z_switch):
+            (t_final[height > z_switch],
+             q_final[height > z_switch],
+             l_final[height > z_switch]) = self._properties_moist(
+                height[height > z_switch],
                 initial_height, initial_temperature,
                 theta_e, total_water, improve)
 
-        if np.any(height < z_switch):
-            (t_final[height < z_switch],
-             q_final[height < z_switch],
-             l_final[height < z_switch]) = self.properties_dry(
-                height[height < z_switch], z_switch, t_switch,
+        if np.any(height <= z_switch):
+            (t_final[height <= z_switch],
+             q_final[height <= z_switch],
+             l_final[height <= z_switch]) = self._properties_dry(
+                height[height <= z_switch], z_switch, t_switch,
                 theta_e, total_water, improve)
 
         if height.size == 1:
@@ -808,7 +819,7 @@ class FastParcel(Environment):
             initial_height, t_initial, q_initial, rate)
         total_water = self.water_content(
             initial_height, q_initial, l_initial, rate)
-        z_switch, t_switch = self.transition_point(
+        z_switch, t_switch = self._transition_point(
             initial_height, t_initial, l_initial,
             theta_e, total_water, improve=5)
 
@@ -882,6 +893,7 @@ class FastParcel(Environment):
         t_profile, q_profile, l_profile = self.properties(
             sol.y[0, :]*units.meter, initial_height,
             t_initial, z_switch, t_switch, theta_e, total_water, improve)
+        print(initial_height)
         temperature[:len(sol.y[0, :])] = t_profile.m_as(units.celsius)
         specific_humidity[:len(sol.y[0, :])] = q_profile.m
         liquid_ratio[:len(sol.y[0, :])] = l_profile.m
