@@ -12,7 +12,7 @@ from scipy.interpolate import interp1d
 from scipy.integrate import solve_ivp
 
 from .thermo import (descend, equilibrate, equivalent_potential_temperature,
-                     saturation_specific_humidity, moist_lapse, mix,
+                     saturation_specific_humidity, moist_lapse_dj, mix,
                      saturation_equivalent_potential_temperature)
 from .environment import Environment, idealised_sounding
 
@@ -115,7 +115,7 @@ class Parcel(Environment):
             sol_states.append(next_state)
 
         if height.size == 1:
-            return tuple([var.item() for var in sol_states[-1]])
+            return [var.item() for var in sol_states[-1]]
 
         t_sol = concatenate(
             [state[0] for state in sol_states]).m_as(units.celsius)
@@ -551,9 +551,8 @@ class FastParcel(Environment):
         # obtain a first guess for temperature using Davies-Jones (2008)
         pressure = self.pressure(height)
         initial_pressure = self.pressure(initial_height)
-        temperature = moist_lapse(
-            pressure, initial_temperature, initial_pressure,
-            method='fast', improve=False)
+        temperature = moist_lapse_dj(
+            pressure, initial_temperature, initial_pressure, improve=False)
 
         # solve using Newton's method
         for _ in range(improve):

@@ -12,18 +12,19 @@ import numpy as np
 
 import metpy.calc as mpcalc
 import metpy.constants as const
-from metpy.units import units, concatenate
+from metpy.units import units
 
 from scipy.special import lambertw
 
 
 # ---------- Basic thermodynamic calculations ----------
 
-def moist_lapse(
-        pressure, initial_temperature, reference_pressure=None,
-        method='integration', improve=True):
+def moist_lapse_dj(
+        pressure, initial_temperature, reference_pressure=None, improve=True):
     """
     Compute temperature from pressure along pseudoadiabats.
+
+    Follows the method of Davies-Jones (2008).
 
     Args:
         pressure: Array of pressures for which the temperature is to
@@ -31,8 +32,6 @@ def moist_lapse(
         initial_temperature: Initial parcel temperature.
         reference_pressure: The pressure corresponding to
             initial_temperature. Optional, defaults to pressure[0].
-        method: 'integration' for the MetPy method, 'fast' for
-            the Davies-Jones (2008) method.
         improve: Whether or not to apply an iteration of Newton's
             method (only relevant for method == 'fast').
 
@@ -44,43 +43,17 @@ def moist_lapse(
         Computing the Wet-Bulb Temperature along Pseudoadiabats’,
         Monthly weather review, vol. 136, no. 7, pp. 2764–2785.
     """
-    pressure = np.atleast_1d(pressure)
     if reference_pressure is None:
         reference_pressure = pressure[0]
-    if method == 'integration':
-        # TODO: remove this once moist_lapse bug is fixed in next
-        # MetPy release
-        if pressure.size == 1:
-            temperature = mpcalc.moist_lapse(
-                pressure, initial_temperature,
-                reference_pressure=reference_pressure)
-            if temperature.size != 1:
-                # mpcalc.moist_lapes has a bug where it will return an
-                # array of length 2 if pressure and reference_pressure
-                # are very close
-                return temperature[0]
-            return temperature.item()
-        else:
-            if reference_pressure == pressure[0]:
-                pressure = pressure[1:]
-                temperature = mpcalc.moist_lapse(
-                    pressure, initial_temperature,
-                    reference_pressure=reference_pressure)
-                return concatenate([initial_temperature, temperature])
-            return mpcalc.moist_lapse(
-                pressure, initial_temperature, reference_pressure)
-    elif method == 'fast':
-        # parcel assumed to be saturated at all times
-        q_initial = saturation_specific_humidity(
-            reference_pressure, initial_temperature)
-        # find initial theta-e (equal to final theta-e)
-        theta_e = equivalent_potential_temperature(
-            reference_pressure, initial_temperature, q_initial)
-        # final temperature is equal to final wet bulb temperature
-        # because parcel is saturated
-        return wetbulb(pressure, theta_e, improve)
-    else:
-        raise ValueError("method must be 'fast' or 'integration'.")
+    # parcel assumed to be saturated at all times
+    q_initial = saturation_specific_humidity(
+        reference_pressure, initial_temperature)
+    # find initial theta-e (equal to final theta-e)
+    theta_e = equivalent_potential_temperature(
+        reference_pressure, initial_temperature, q_initial)
+    # final temperature is equal to final wet bulb temperature
+    # because parcel is saturated
+    return wetbulb(pressure, theta_e, improve)
 
 
 def temperature_change(delta_q):
@@ -331,7 +304,7 @@ def wetbulb_romps(pressure, temperature, specific_humidity):
     lcl_pressure, lcl_temperature = lcl_romps(
         pressure, temperature, specific_humidity)
     # descend moist adiabatically from the LCL to the starting level
-    return moist_lapse(pressure, lcl_temperature, lcl_pressure)
+    return mpcalc.moist_lapse(pressure, lcl_temperature, lcl_pressure).item()
 
 
 # ---------- Calculations from Davies-Jones 2008 ----------
@@ -649,10 +622,9 @@ def reversible_lapse_daviesjones(
     A1 = f_initial**(-1/lambda_)*C/reference_pi**(lambda_*nu)  # correction
 
     # initial guess using pseudoadiabat
-    temperature = moist_lapse(
+    temperature = moist_lapse_dj(
         pressure*units.mbar, initial_temperature,
-        reference_pressure*units.mbar, method='fast',
-        improve=False).m_as(units.celsius)
+        reference_pressure*units.mbar, improve=False).m_as(units.celsius)
 
     pi = (pressure/1000.0)**(1./lambda_)
     X = (C/(A1*pi**(lambda_*nu)))**lambda_  # correction
@@ -743,7 +715,7 @@ def reversible_lapse_saunders(
     A, _ = saunders_function(reference_pressure, t_initial)
 
     # initial guess: pseudoadiabatic values
-    t_final = moist_lapse(
+    t_final = mpcalc.moist_lapse(
         pressure*units.mbar, t_initial*units.kelvin,
         reference_pressure*units.mbar).m_as(units.kelvin)
 
@@ -797,7 +769,7 @@ def descend(
 
     # case 2: some moist descent
     if kind == 'pseudo':
-        t_final_moist = moist_lapse(
+        t_final_moist = mpcalc.moist_lapse(
             pressure, temperature, reference_pressure)
     elif kind == 'reversible':
         t_final_moist = reversible_lapse_saunders(
@@ -810,6 +782,9 @@ def descend(
 
     if l_final_moist >= 0 or improve is False:
         # case 2.1: moist adiabat only
+        if not hasattr(pressure, 'size'):
+            return (t_final_moist.item(), q_final_moist.item(),
+                    l_final_moist.item())
         return t_final_moist, q_final_moist, l_final_moist
 
     # case 2.2: adiabat switching
@@ -831,6 +806,8 @@ def descend(
             pressure, t_final, q_final, prime=True)
         t_final = t_final - (value - theta_e_initial)/slope
 
+    if not hasattr(pressure, 'size'):
+        return t_final.item(), q_final.item(), l_final.item()
     return t_final, q_final, l_final
 
 

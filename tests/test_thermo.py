@@ -7,7 +7,7 @@ from metpy.testing import assert_almost_equal, assert_array_equal
 from metpy.units import units
 
 from dparcel.thermo import (
-    moist_lapse,
+    moist_lapse_dj,
     temperature_change,
     saturation_specific_humidity,
     equivalent_potential_temperature,
@@ -23,64 +23,31 @@ from dparcel.thermo import (
     equilibrate,
 )
 
-def test_moist_lapse_scalar():
-    """Test moist_lapse for a single final pressure."""
-    actual = moist_lapse(1000*units.mbar, 0*units.celsius, 900*units.mbar)
-    truth = 5.140677691654389*units.celsius
-    assert_almost_equal(actual, truth, 3)
-    assert not hasattr(actual, 'size')
-
-def test_moist_lapse_up():
-    """Test moist_lapse for a decreasing pressure array."""
-    pressure = [900, 800, 700]*units.mbar
-    actual = moist_lapse(pressure, 0*units.celsius, 1000*units.mbar)
-    truth = [
-        -5.603133863724906, -12.223376120570379, -20.15342938802408,
-    ]*units.celsius
-    assert_almost_equal(actual, truth, 3)
-
-def test_moist_lapse_down():
-    """Test moist_lapse for an increasing pressure array."""
-    pressure = [800, 900, 1000]*units.mbar
-    actual = moist_lapse(pressure, -20*units.celsius, 700*units.mbar)
-    truth = [
-        -12.08128253224288, -5.472554931170237, 0.12013477440223141,
-    ]*units.celsius
-    assert_almost_equal(actual, truth, 3)
-
-def test_moist_lapse_no_reference():
-    """Test moist_lapse without a reference pressure supplied."""
-    pressure = [800, 900, 1000]*units.mbar
-    actual = moist_lapse(pressure, -20*units.celsius)
-    truth = [
-        -20.0, -12.835349000048097, -6.699583983263153,
-    ]*units.celsius
-    assert_almost_equal(actual, truth, 3)
-
-def moist_lapse_fast():
+def test_moist_lapse_dj():
     """Test the Davies-Jones pseudoadiabat calculation."""
     pressure = [800, 900, 1000]*units.mbar
-    actual = moist_lapse(
-        pressure, -20*units.celsius, 700*units.mbar, method='fast')
+    actual = moist_lapse_dj(pressure, -20*units.celsius, 700*units.mbar)
     truth = [
         -12.127397603992893, -5.541946232250285, 0.048623197584600486,
     ]*units.celsius
     assert_almost_equal(actual, truth, 3)
 
-def test_moist_lapse_fast_no_reference():
+def test_moist_lapse_dj_no_reference():
     """Test the Davies-Jones calculation without a reference pressure."""
     pressure = [800, 900, 1000]*units.mbar
-    actual = moist_lapse(pressure, -20*units.celsius, method='fast')
+    actual = moist_lapse_dj(pressure, -20*units.celsius)
     truth = [
         -20.000637807046292, -12.873778773870667, -6.760509849394381,
     ]*units.celsius
     assert_almost_equal(actual, truth, 3)
 
-def test_moist_lapse_invalid_method():
-    """Check that moist_lapse raises an error if the method is invalid."""
-    with pytest.raises(ValueError):
-        _ = moist_lapse(
-            800*units.mbar, 0*units.celsius, 1000*units.mbar, method='hello')
+def test_moist_lapse_dj_scalar():
+    """Test the Davies-Jones calculation for scalar input."""
+    pressure = 800*units.mbar
+    actual = moist_lapse_dj(pressure, -20*units.celsius, 700*units.mbar)
+    truth = -12.127397603992893*units.celsius
+    assert_almost_equal(actual, truth, 3)
+    assert not hasattr(actual, 'size')
 
 def test_temperature_change():
     """Test temperature_change."""
@@ -355,7 +322,7 @@ def test_descend_dry():
     assert not hasattr(actual_l, 'size')
 
 
-def test_descent_moist_pseudoadiabatic():
+def test_descend_moist_pseudoadiabatic():
     """Test descend for moist pseudoadiabatic descent."""
     actual_t, actual_q, actual_l = descend(
         600*units.mbar, -20*units.celsius,
@@ -371,7 +338,7 @@ def test_descent_moist_pseudoadiabatic():
     assert not hasattr(actual_q, 'size')
     assert not hasattr(actual_l, 'size')
 
-def test_descent_moist_reversible():
+def test_descend_moist_reversible():
     """Test descend for moist reversible adiabatic descent."""
     actual_t, actual_q, actual_l = descend(
         600*units.mbar, -20*units.celsius,
@@ -387,7 +354,7 @@ def test_descent_moist_reversible():
     assert not hasattr(actual_q, 'size')
     assert not hasattr(actual_l, 'size')
 
-def test_descent_mixed_pseudoadiabatic():
+def test_descend_mixed_pseudoadiabatic():
     """Test descend for mixed moist pseudoadiabatic and dry descent."""
     actual_t, actual_q, actual_l = descend(
         800*units.mbar, -20*units.celsius,
@@ -403,7 +370,7 @@ def test_descent_mixed_pseudoadiabatic():
     assert not hasattr(actual_q, 'size')
     assert not hasattr(actual_l, 'size')
 
-def test_descent_mixed_reversible():
+def test_descend_mixed_reversible():
     """Test descend for mixed moist reversible adiabatic and dry descent."""
     actual_t, actual_q, actual_l = descend(
         800*units.mbar, -20*units.celsius,
