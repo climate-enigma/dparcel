@@ -3,8 +3,8 @@ dparcel
 .. image:: https://github.com/climate-enigma/dparcel/actions/workflows/python-package.yml/badge.svg
     :target: https://github.com/climate-enigma/dparcel/actions/workflows/python-package.yml
     :alt: Test Status
-.. image:: https://codecov.io/gh/tschanzer/dparcel/branch/main/graph/badge.svg?token=HNHGRDKPT8
-    :target: https://codecov.io/gh/tschanzer/dparcel
+.. image:: https://codecov.io/gh/climate-enigma/dparcel/branch/main/graph/badge.svg?token=HNHGRDKPT8
+    :target: https://codecov.io/gh/climate-enigma/dparcel
     :alt: Coverage
 .. image:: https://readthedocs.org/projects/dparcel/badge/?version=latest
     :target: https://dparcel.readthedocs.io/en/latest/?badge=latest
