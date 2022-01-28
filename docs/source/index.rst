@@ -5,17 +5,19 @@
 
 **dparcel**
 *************
-.. image:: https://github.com/tschanzer/dparcel/actions/workflows/python-package.yml/badge.svg
-    :target: https://github.com/tschanzer/dparcel/actions/workflows/python-package.yml
+.. image:: https://github.com/climate-enigma/dparcel/actions/workflows/python-package.yml/badge.svg
+    :target: https://github.com/climate-enigma/dparcel/actions/workflows/python-package.yml
+    :alt: Test Status
 .. image:: https://codecov.io/gh/tschanzer/dparcel/branch/main/graph/badge.svg?token=HNHGRDKPT8
     :target: https://codecov.io/gh/tschanzer/dparcel
+    :alt: Coverage
 .. image:: https://readthedocs.org/projects/dparcel/badge/?version=latest
     :target: https://dparcel.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
-.. image:: https://img.shields.io/github/license/tschanzer/dparcel
-    :alt: GitHub
+.. image:: https://img.shields.io/github/license/climate-enigma/dparcel
+    :target: https://github.com/climate-enigma/dparcel/blob/main/LICENSE
+    :alt: License
 
-|
 :code:`dparcel` is a very simple model of downdrafts in atmospheric convection that uses parcel theory to simulate the motion of a descending, entraining air parcel.
 You may supply any atmospheric sounding and initial conditions for the calculation.
 
@@ -55,4 +57,4 @@ Documentation Contents
 License
 ---------
 
-`BSD-3-Clause License <https://choosealicense.com/licenses/bsd-3-clause/>`_
+`BSD-3-Clause License <https://github.com/climate-enigma/dparcel/blob/main/LICENSE>`_
