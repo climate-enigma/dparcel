@@ -14,6 +14,7 @@ dparcel
     :alt: License
 
 |
+
 :code:`dparcel` is a very simple model of downdrafts in atmospheric convection that uses parcel theory to simulate the motion of a descending, entraining air parcel.
 You may supply any atmospheric sounding and initial conditions for the calculation.
 
