@@ -14,7 +14,7 @@ setup(
     description=('A simple parcel theory model of downdrafts '
                  'in atmospheric convection.'),
     long_description=readme(),
-    long_description_content_type='text/rst',
+    long_description_content_type='text/x-rst',
     url='https://github.com/climate-enigma/dparcel',
     author='Thomas Schanzer',
     author_email='t.schanzer@student.unsw.edu.au',
