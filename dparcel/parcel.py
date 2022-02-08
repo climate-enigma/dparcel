@@ -84,9 +84,6 @@ class Parcel(Environment):
         height = np.atleast_1d(height).m_as(units.meter)
         step = step.m_as(units.meter)
 
-        if height.size > 1 and np.any(height[:-1] <= height[1:]):
-            raise ValueError(
-                'Height array must be monotonically decreasing.')
         if reference_height is not None:
             reference_height = reference_height.m_as(units.meter)
             if height.size == 1 and height.item() == reference_height:
@@ -100,11 +97,11 @@ class Parcel(Environment):
 
         # create height array with correct spacing
         if reference_height is None or reference_height == height[0]:
-            all_heights = np.arange(height[0], height[-1], -step)
-            all_heights = np.append(all_heights, height[-1])*units.meter
+            all_heights = np.arange(np.max(height), np.min(height), -step)
+            all_heights = np.append(all_heights, np.min(height))*units.meter
         else:
-            all_heights = np.arange(reference_height, height[-1], -step)
-            all_heights = np.append(all_heights, height[-1])*units.meter
+            all_heights = np.arange(reference_height, np.min(height), -step)
+            all_heights = np.append(all_heights, np.min(height))*units.meter
 
         # calculate t, q and l one downward step at a time
         sol_states = [(t_initial, q_initial, l_initial)]
