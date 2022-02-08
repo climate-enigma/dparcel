@@ -20,18 +20,6 @@ sydney = Parcel(p_sydney[4:], z_sydney[4:], t_sydney[4:], td_sydney[4:])
 sydneyfast = FastParcel(
     p_sydney[4:], z_sydney[4:], t_sydney[4:], td_sydney[4:])
 
-def test_parcel_profile_nonmonotonic_height():
-    """Test Parcel.profile for non-monotonic height array."""
-    height = [3000, 2000, 1000, 2000]*units.meter
-    t_initial = -2*units.celsius
-    q_initial = 1e-4*units.dimensionless
-    l_initial = 0*units.dimensionless
-    rate = 0.5/units.km
-
-    with pytest.raises(ValueError):
-        _, _, _ = sydney.profile(
-            height, t_initial, q_initial, l_initial, rate)
-
 def test_parcel_profile_height_above_reference():
     """Test Parcel.profile for final height above the reference height."""
     height = [4000, 2000, 1000]*units.meter
